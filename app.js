@@ -8,7 +8,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
  
 // parse application/json
 app.use(bodyParser.json());
-console.log(" ")
 
 app.use((req,res,next) => {
     res.header('Access-Control-Allow-Origin','*');

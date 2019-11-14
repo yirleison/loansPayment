@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const consola = console.log;
 const connectiondb = () => {
     mongoose.connect(process.env.URLDB, (err, res) => {
         if (err) {
