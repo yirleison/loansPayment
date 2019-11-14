@@ -1,0 +1,23 @@
+{
+  "name": "loanspayment",
+  "version": "1.0.0",
+  "description": "project for loan payments",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yirleison/loansPayment.git"
+  },
+  "author": "Yirleison Palomeque",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yirleison/loansPayment/issues"
+  },
+  "homepage": "https://github.com/yirleison/loansPayment#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  }
+}
