@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
-paymentSchema = mongoose.Schema ({
+paymentSchema = new Schema ({
     fechaPago: Date,
     valor: Number,
     proximaFecha: Number,

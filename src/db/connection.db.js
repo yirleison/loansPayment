@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('../config/config');
 const consola = console.log;
 const connectiondb = () => {
     mongoose.connect(process.env.URLDB, (err, res) => {
