@@ -1,5 +1,4 @@
 const Loan = require("../models/loan.model");
-const Deposit = require("../models/deposit.model");
 const moment = require("moment");
 const { loanLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
@@ -24,14 +23,14 @@ const createLoand = (req, res) => {
 
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
-  loan.save(function(error, loanSave) {
+  loan.save(function(error, loanSaved) {
     if (error) {
       res.status(500).send({
         status: "false",
         message: "Ha ocurrido un error al tratar de registrar la solicitud"
       });
     } else {
-      if (!loanSave) {
+      if (!loanSaved) {
         res.status(400).send({
           status: "false",
           message: "Error al tratar de procesar la solicitud"
@@ -39,7 +38,7 @@ const createLoand = (req, res) => {
       }
       loanLogger.info({
         message: "Prestamo creado en la base de datos",
-        loanSave: loanSave
+        loanSave: loanSaved
       });
       //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
       res.status(200).send({
@@ -107,10 +106,9 @@ const loanUpdateById = (req, res) => {
     message: "Inicio de funcionabilidad para actualizar un prestamo"
   });
   let body = req.body;
-  body.dateLoan = moment().format("YYYY-MM-DD");
+  body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
-  const loanUpdate = new Loan();
   nextDatePayment = moment()
     .add(1, "month")
     .format("YYYY-MM-DD");

@@ -3,9 +3,8 @@ const { messages } = require("../utils/messages");
 const { loanLogger } = require("../../logger");
 
 const loanById  = async (id) => {
-    console.log('loan service id',id);
   loanLogger.info({
-    message: "Inicio de funcionabilidad para listar prestamo por ID"
+    message: "Inicio de funcionabilidad para el servicio listar prestamo por ID"
   });
 
   return new Promise((resolve, reject) => {

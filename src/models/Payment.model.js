@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const Deposit = Schema ({
+const Payment = Schema ({
     dateDeposit: Date,
     amount: Number,
     interest: Number,
@@ -11,4 +11,4 @@ const Deposit = Schema ({
     idLoan: {type: Schema.ObjectId, ref: 'Loan'}
 });
 
-module.exports = mongoose.model('Deposit', Deposit);
+module.exports = mongoose.model('Payment', Payment);
