@@ -1,4 +1,6 @@
 const Loan = require("../models/loan.model");
+const Payment = require("../models/Payment.model");
+const paymentService = require("../services/payment.service");
 const moment = require("moment");
 const { loanLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
@@ -17,7 +19,6 @@ const createLoand = (req, res) => {
   loan.dateLoan = dateLoan;
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
-  loan.valueIntertest = parseFloat(body.valueIntertest);
   loan.statusLoan = false;
   loan.idUser = body.idUser;
 
@@ -40,11 +41,43 @@ const createLoand = (req, res) => {
         message: "Prestamo creado en la base de datos",
         loanSave: loanSaved
       });
-      //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
-      res.status(200).send({
-        status: "Ok",
-        loanSave
+
+      payment = new Payment();
+
+      payment.dateDeposit = null;
+      payment.valueDeposit = 0;
+      payment.amount = 0;
+      //Calcular el valor del interes inicial
+      payment.interest = parseFloat(
+        calInteresValue(loan.rateInterest, loan.amount)
+      );
+      payment.nextDatePayment = nextDatePayment;
+      payment.balanceLoand = loanSaved.amount;
+      //Falta adicionar el compo de abogo a capital paymentCapital..
+      payment.statusDeposit = false;
+      payment.idLoan = loanSaved._id;
+      loanLogger.info({
+        message: "Funcionabilidad ",
+        modelCreate: payment
       });
+      paymentService.initialCreatedPayment(payment).then(
+        resolve => {
+          if (resolve) {
+            res.status(200).send({
+              status: "Ok",
+              loanSaved
+            });
+          } else {
+            //En caso tal de que no se pueda crear el pago de una cuota inicial se debe proceder a crearlo por la interfaz del módulo de payment
+            consola("no se pudo crear el pago inicial");
+          }
+        },
+        error => {
+          if (error) {
+            consola("Error al tratar de iniciar un pago");
+          }
+        }
+      );
     }
   });
 };
@@ -112,7 +145,7 @@ const loanUpdateById = (req, res) => {
   nextDatePayment = moment()
     .add(1, "month")
     .format("YYYY-MM-DD");
-    //consola(nextDatePayment);
+  //consola(nextDatePayment);
   body.amount = parseFloat(body.amount);
   body.valueIntertest = parseFloat(body.valueIntertest);
 
@@ -142,6 +175,8 @@ const loanUpdateById = (req, res) => {
     }
   });
 };
+
+const calInteresValue = (interes, amount) => (amount * interes) / 100;
 
 module.exports = {
   createLoand,
