@@ -17,8 +17,15 @@ const logger = createLogger({
        new transports.Console()
      ]
 });
+
+const interestLogger = createLogger({
+  transports: [
+      new transports.Console()
+    ]
+});
  module.exports = {
     loanLogger,
     logger,
-    paymentLogger
+    paymentLogger,
+    interestLogger
  };

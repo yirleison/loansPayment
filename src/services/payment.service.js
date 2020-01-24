@@ -2,11 +2,30 @@ const Payment = require("../models/Payment.model");
 const { messages } = require("../utils/messages");
 const { paymentLogger } = require("../../logger");
 
+const createPayment = async (payload) => {
+  return new Promise((resolve, reject) => {
+    payment = new Payment(payload);
+    payment.save((error, paymentSaved) => {
+      if (error) {
+        reject(error);
+      } else {
+        if (!paymentSaved) {
+          reject(error);
+        }
+        paymentLogger.info({
+          message: "Deposito creado en la base de datos",
+          paymentSaved: paymentSaved
+        });
+        resolve(paymentSaved);
+      }
+    });
+  })
+}
+
 const paymentById = async (id) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para el servicio listar pago por ID"
   });
-
   return new Promise((resolve, reject) => {
     Payment.findOne({ _id: id }, (error, payment) => {
       if (error) {
@@ -48,7 +67,31 @@ initialCreatedPayment = (modelPayment) => {
   });
 };
 
+const paymenUpdateById = (idPayment, payload) => {
+  paymentLogger.info({
+    message: "Inicio de funcionabilidad para actualizar un deposito"
+  });
+  return new Promise((resolve, reject) => {
+    Payment.findByIdAndUpdate(idPayment, payload, (error, paymentUpdate) => {
+      if (error) {
+        reject(error);
+      } else {
+        if (!paymentUpdate) {
+          reject(error);
+        }
+        paymentLogger.info({
+          message: "Deposito actualizado en la base de datos",
+          paymentUpdate: paymentUpdate
+        });
+        resolve(paymentUpdate);
+      }
+    });
+  });
+}
+
 module.exports = {
   paymentById,
-  initialCreatedPayment
+  initialCreatedPayment,
+  paymenUpdateById,
+  createPayment
 };
