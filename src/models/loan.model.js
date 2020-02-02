@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
+// valueIntertest: Number,
 const Loan = Schema ({
     dateLoan: Date,
     amount: Number,
     rateInterest: Number,
-    valueIntertest: Number,
     statusLoan: Boolean,
+    finishedDatePayment: Date,
     idUser: String,
 });
 

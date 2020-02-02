@@ -20,6 +20,7 @@ const createLoand = (req, res) => {
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
   loan.statusLoan = false;
+  loan.finishedDatePayment = body.finishedDatePayment;
   loan.idUser = body.idUser;
 
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
@@ -53,7 +54,6 @@ const createLoand = (req, res) => {
       );
       payment.nextDatePayment = nextDatePayment;
       payment.balanceLoand = loanSaved.amount;
-      //Falta adicionar el compo de abogo a capital paymentCapital..
       payment.statusDeposit = false;
       payment.idLoan = loanSaved._id;
       loanLogger.info({
@@ -102,7 +102,8 @@ const listLoan = (req, res) => {
         loanLogger.info({
           message: "lista prestamos Realizada de manera exitosa"
         });
-        res.status(200).send(messages("OK", loans));
+        //res.status(200).send(messages("OK", loans));
+        res.status(200).send({data: loans});
       }
     }
   });
@@ -147,11 +148,11 @@ const loanUpdateById = (req, res) => {
     .format("YYYY-MM-DD");
   //consola(nextDatePayment);
   body.amount = parseFloat(body.amount);
-  body.valueIntertest = parseFloat(body.valueIntertest);
+  //body.valueIntertest = parseFloat(body.valueIntertest);
 
   loanLogger.info({
     message: "Modelo creado exitosamente para actualizar prestamo",
-    modelCreate: loan
+    modelCreate: body
   });
 
   Loan.findByIdAndUpdate(req.params.id, body, (error, loadUpdate) => {

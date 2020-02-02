@@ -72,7 +72,7 @@ const paymenUpdateById = (idPayment, payload) => {
     message: "Inicio de funcionabilidad para actualizar un deposito"
   });
   return new Promise((resolve, reject) => {
-    Payment.findByIdAndUpdate(idPayment, payload, (error, paymentUpdate) => {
+    Payment.findByIdAndUpdate(idPayment, payload,{new:true}, (error, paymentUpdate) => {
       if (error) {
         reject(error);
       } else {
