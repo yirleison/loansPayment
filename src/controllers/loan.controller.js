@@ -5,9 +5,10 @@ const moment = require("moment");
 const { loanLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
 const consola = console.log;
-const loan = new Loan();
+
 
 const createLoand = (req, res) => {
+  const loan = new Loan();
   let body = req.body;
   body.dateLoan = moment().format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
@@ -20,8 +21,10 @@ const createLoand = (req, res) => {
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
   loan.statusLoan = false;
-  loan.finishedDatePayment = body.finishedDatePayment;
+  loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
+
+  consola('modelo loan',loan)
 
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
@@ -102,6 +105,17 @@ const listLoan = (req, res) => {
         loanLogger.info({
           message: "lista prestamos Realizada de manera exitosa"
         });
+        /*if (loans.finishedDatePayment == 'null') {
+          loans.finishedDatePayment = 'Pendiente'
+        }*/
+        loans.map(function(dato){
+          if(dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0){
+            dato.finishedDatePayment = 'Pendiente';
+            
+          }
+          return dato;
+        });
+
         //res.status(200).send(messages("OK", loans));
         res.status(200).send({data: loans});
       }

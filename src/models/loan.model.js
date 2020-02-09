@@ -6,7 +6,7 @@ const Loan = Schema ({
     amount: Number,
     rateInterest: Number,
     statusLoan: Boolean,
-    finishedDatePayment: Date,
+    finishedDatePayment: String,
     idUser: String,
 });
 

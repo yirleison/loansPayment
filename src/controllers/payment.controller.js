@@ -2,7 +2,6 @@ const moment = require("moment");
 const paymentServices = require("../services/payment.service");
 const loanServices = require("../services/loans.service");
 const Payment = require("../models/Payment.model");
-const Interest = require('../models/interest.model');
 const interestServices = require('../services/interest.service');
 const { paymentLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
