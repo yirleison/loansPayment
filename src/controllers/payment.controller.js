@@ -79,7 +79,7 @@ const listPayment = (req, res) => {
         paymentLogger.info({
           message: "lista de depositos Realizada de manera exitosa"
         });
-        res.status(200).send(messages("OK", payments));
+        res.status(200).send({data:payments});
       }
     }
   });
