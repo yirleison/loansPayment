@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 // valueIntertest: Number,
 const User = Schema ({
-    name: String,
     fullName: String,
     documentType: String,
     documentNumber: String,

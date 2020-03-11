@@ -111,6 +111,33 @@ const paymentById = (req, res) => {
   });
 };
 
+const paymentByIdLoan = (req, res) => {
+  consola('entrrrrrrrooo',req.params.id)
+  paymentLogger.info({
+    message: "Inicio de funcionabilidad para listar pago por ID"
+  });
+  Payment.find({ idLoan: req.params.id }, (error, payment) => {
+    if (error) {
+      res.status(500).send({
+        status: "false",
+        message: "La consulta a la base de datos no devolvio resultados"
+      });
+    } else {
+      if (!payment) {
+        res.status(400).send({
+          status: "false",
+          message: "Error al tratar de procesar la solicitud"
+        });
+      } else {
+        paymentLogger.info({
+          message: "listar pago por ID realizado exitosamente"
+        });
+        res.status(200).send(messages("OK", payment));
+      }
+    }
+  });
+};
+
 const paymentUpdateById = async (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para actualizar un deposito"
@@ -323,5 +350,6 @@ module.exports = {
   paymentRegister,
   listPayment,
   paymentById,
-  paymentUpdateById
+  paymentUpdateById,
+  paymentByIdLoan
 };

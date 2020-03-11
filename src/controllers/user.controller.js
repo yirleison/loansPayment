@@ -9,8 +9,6 @@ const createUser = async (req, res) => {
     const payload = req.body;
 
     user = new User();
-
-    user.name = payload.name; 
     user.fullName = payload.fullName; 
     user.documentType = payload.documentType; 
     user.documentNumber = payload.documentNumber; 
