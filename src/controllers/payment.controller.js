@@ -19,7 +19,6 @@ const paymentRegister = async (req, res) => {
   const payload = req.body;
 
   try {
-    let nextDatePayment;
     let loanService = await loanServices.loanById(payload.idLoan);
     payload.dateDeposit = payload.dateDeposit
       ? (payment.dateDeposit = moment().format("YYYY-MM-DD"))
@@ -79,7 +78,7 @@ const listPayment = (req, res) => {
         paymentLogger.info({
           message: "lista de depositos Realizada de manera exitosa"
         });
-        res.status(200).send({data:payments});
+        res.status(200).send({ data: payments });
       }
     }
   });
@@ -112,7 +111,7 @@ const paymentById = (req, res) => {
 };
 
 const paymentByIdLoan = (req, res) => {
-  consola('entrrrrrrrooo',req.params.id)
+  consola('entrrrrrrrooo', req.params.id)
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
@@ -146,6 +145,10 @@ const paymentUpdateById = async (req, res) => {
   const idPayment = req.params.id;
   const typePayment = req.headers.typepayment;
 
+  consola( req.body)
+  consola(idPayment)
+  consola(typePayment)
+  consola( req.headers)
   //Valido el tipo de pago si es 1 es porque se va pagar una cuota, si es 2 es porque se va actualizar una cuota existente..
   switch (typePayment) {
     case "1":
