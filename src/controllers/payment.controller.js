@@ -292,6 +292,9 @@ const paymentUpdateById = async (req, res) => {
     case "0":
       consola("Entro a la funcionabilidad para actualizar un pago");
       try {
+
+        payload.statusDeposit = ( payload.statusDeposit == '1' ? true : false );
+
         let dateDeposit = payload.dateDeposit
           ? (payment.dateDeposit = moment().format("YYYY-MM-DD"))
           : null;
