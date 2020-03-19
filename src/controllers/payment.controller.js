@@ -115,7 +115,7 @@ const paymentByIdLoan = (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
-  Payment.find({ idLoan: req.params.id }, (error, payment) => {
+  Payment.find({ idLoan: req.params.id }, {new : true}, (error, payment) => {
     if (error) {
       res.status(500).send({
         status: "false",
@@ -144,11 +144,6 @@ const paymentUpdateById = async (req, res) => {
   const payload = req.body;
   const idPayment = req.params.id;
   const typePayment = req.headers.typepayment;
-
-  consola( req.body)
-  consola(idPayment)
-  consola(typePayment)
-  consola( req.headers)
   //Valido el tipo de pago si es 1 es porque se va pagar una cuota, si es 2 es porque se va actualizar una cuota existente..
   switch (typePayment) {
     case "1":
