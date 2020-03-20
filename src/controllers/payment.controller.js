@@ -111,11 +111,10 @@ const paymentById = (req, res) => {
 };
 
 const paymentByIdLoan = (req, res) => {
-  consola('entrrrrrrrooo', req.params.id)
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
-  Payment.find({ idLoan: req.params.id }, {new : true}, (error, payment) => {
+  Payment.find({ idLoan: req.params.id }).sort({statusDeposit: false}).exec((error, payment) => {
     if (error) {
       res.status(500).send({
         status: "false",
