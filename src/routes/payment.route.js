@@ -7,5 +7,6 @@ api.get('/pagos', paymentController.listPayment);
 api.get('/pago/:id', paymentController.paymentById);
 api.get('/pago-prestamo/:id', paymentController.paymentByIdLoan);
 api.put('/pago/:id', paymentController.paymentUpdateById);
+api.delete('/pago/:id', paymentController.deletePayment);
 
 module.exports = api;

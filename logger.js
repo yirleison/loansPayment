@@ -30,10 +30,24 @@ const userLogger = createLogger({
     ]
 });
 
+const balanceCapilalLogger = createLogger({
+  transports: [
+      new transports.Console()
+    ]
+});
+
+const balanceInterestLogger = createLogger({
+  transports: [
+      new transports.Console()
+    ]
+});
+
  module.exports = {
     loanLogger,
     logger,
     paymentLogger,
     interestLogger,
-    userLogger
+    userLogger,
+    balanceCapilalLogger,
+    balanceInterestLogger
  };

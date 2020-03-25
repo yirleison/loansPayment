@@ -2,22 +2,31 @@ const moment = require("moment");
 const paymentServices = require("../services/payment.service");
 const loanServices = require("../services/loans.service");
 const Payment = require("../models/Payment.model");
+const BalanceCapital = require("../models/balanceCapital.model");
+const BalanceInteres = require("../models/expensesIcomes.model");
+//Services
 const interestServices = require('../services/interest.service');
+const expensesIcomesService = require('../services/expensesIcomes.service');
+
 const { paymentLogger } = require("../../logger");
+const { balanceCapilalLogger } = require("../../logger");
+const { balanceInterestLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
 const consola = console.log;
 const payment = new Payment();
 const modelInterest = {};
 let paymentService = {};
 let paymentUpdate;
+let modelIcomeExpense;
 let aux = 0;
+
 
 const paymentRegister = async (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para registrar un deposito"
   });
   const payload = req.body;
-
+  payload.statusDeposit = (payload.statusDeposit == '1' || payload.statusDeposit == 1 ? false : true);
   try {
     let loanService = await loanServices.loanById(payload.idLoan);
     payload.dateDeposit = payload.dateDeposit
@@ -114,7 +123,7 @@ const paymentByIdLoan = (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
-  Payment.find({ idLoan: req.params.id }).sort({statusDeposit: false}).exec((error, payment) => {
+  Payment.find({ idLoan: req.params.id }).sort({ statusDeposit: false }).exec((error, payment) => {
     if (error) {
       res.status(500).send({
         status: "false",
@@ -149,6 +158,7 @@ const paymentUpdateById = async (req, res) => {
       consola(
         "Entro a la funcioanalidad para realizar un pago de una cuota existente"
       );
+      consola(payload)
       try {
         let consultPayment = await paymentServices.paymentById(idPayment);
         let consultLoan = await loanServices.loanById(consultPayment.idLoan);
@@ -163,7 +173,7 @@ const paymentUpdateById = async (req, res) => {
             consola('entro 1', consultLoan)
             if (aux == consultPayment.interest) {
               consola("Caso cuando el clidatePaymentnte paga la totalidad del prestamo", aux);
-              //Actualizo la cuota de pago existente y creo una nueva cuota de pago....
+              //Creo un modelo de pagos para actualizar una cuota de pago existente....
               paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
                 consultPayment.nextDatePayment = null, 0, true, consultPayment.idLoan)
               try {
@@ -173,10 +183,22 @@ const paymentUpdateById = async (req, res) => {
                   consultLoan.statusLoan = true;
                   let modelUpdateLoan = createModelLoan(consultLoan.dateLoan, consultLoan.amount, consultLoan.rateInterest,
                     consultLoan.statusLoan, consultLoan.finishedDatePayment, consultLoan.idUser);
-                  consola(modelUpdateLoan)
+                  //consola(modelUpdateLoan)
                   let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
                   if (loanUpdate) {
-                    res.status(200).send(messages('OK', 'El prestamo se ha pagado en su totalidad'));
+                    //Creo un modelo para crear una entrada de dinero y actualizo el capital
+                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, consultPayment.interest, 'Recaudos de ' + consultLoan._id);
+                    createIcome(modelIcomeExpense, function (data, error) {
+                      if (data) {
+                        //res.status(200).send(messages("OK", paymentService));
+                        consola(messages('OK', 'El prestamo se ha pagado en su totalidad'))
+                         res.status(200).send(messages('OK', 'El prestamo se ha pagado en su totalidad'));
+                      }
+                      if (error) {
+                        console.log(error)
+                      }
+                    });
+                   
                   }
                 }
               } catch (error) {
@@ -204,7 +226,16 @@ const paymentUpdateById = async (req, res) => {
                 try {
                   let createPayment = await paymentServices.createPayment(paymentService);
                   if (createPayment) {
-                    res.status(200).send(messages("OK", paymentService));
+                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + consultLoan._id);
+                    createIcome(modelIcomeExpense, function (data, error) {
+                      if (data) {
+                        //Pendiente manejar el error...
+                        res.status(200).send(messages("OK", paymentService));
+                      }
+                      else {
+                        res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
+                      }
+                    });
                   }
                 } catch (error) {
                   consola(error)
@@ -236,7 +267,17 @@ const paymentUpdateById = async (req, res) => {
                     let createPayment = await paymentServices.createPayment(paymentService);
 
                     if (createPayment) {
-                      res.status(200).send(messages("OK", paymentService));
+                      //Creo un modelo para crear una entrada de dinero y actualizo el capital
+                      modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + consultLoan._id);
+                      createIcome(modelIcomeExpense, function (data, error) {
+                        if (data) {
+                          console.log('Data', data)
+                          res.status(200).send(messages("OK", paymentService));
+                        }
+                        if (error) {
+                          console.log(error)
+                        }
+                      });
                     }
                   } catch (error) {
                     consola(error)
@@ -244,7 +285,7 @@ const paymentUpdateById = async (req, res) => {
                   }
                 } else {
                   res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
-                } loanUpdate
+                }
 
               }
             } catch (error) {
@@ -265,7 +306,17 @@ const paymentUpdateById = async (req, res) => {
               try {
                 let createPayment = await paymentServices.createPayment(paymentService);
                 if (createPayment) {
-                  res.status(200).send(messages("OK", paymentService));
+                  //Creo un modelo para crear una entrada de dinero y actualizo el capital
+                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id);
+                  createIcome(modelIcomeExpense, function (data, error) {
+                    if (data) {
+                      //Pensiente manejar el error...
+                      res.status(200).send(messages("OK", paymentService));
+                    }
+                    else {
+                      res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
+                    }
+                  });
                 }
               } catch (error) {
                 consola(error)
@@ -287,8 +338,8 @@ const paymentUpdateById = async (req, res) => {
       consola("Entro a la funcionabilidad para actualizar un pago");
       try {
 
-        payload.statusDeposit = ( payload.statusDeposit == '1' ? true : false );
-
+        payload.statusDeposit = (payload.statusDeposit == '1' || payload.statusDeposit == 1 ? false : true);
+        //consola(payload)
         let dateDeposit = payload.dateDeposit
           ? (payment.dateDeposit = moment().format("YYYY-MM-DD"))
           : null;
@@ -312,13 +363,38 @@ const paymentUpdateById = async (req, res) => {
   }
 };
 
+const deletePayment = (req, res) => {
+
+  console.log(req.params)
+  Payment.findOneAndRemove(req.params.id, (error, paymentRemove) => {
+    if (error) {
+      res.status(500).send({
+        status: "false",
+        message: "Ha ocurrido un error interno al tratar de procesar la solicitud"
+      });
+    } else {
+      if (!paymentRemove) {
+        res.status(400).send({
+          status: "false",
+          message: "Error al tratar de procesar la solicitud"
+        });
+      }
+      paymentLogger.info({
+        message: "Deposito eliminado de la base de datos",
+        paymentRemove: paymentRemove
+      });
+      //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
+      res.status(200).send(messages("OK", paymentRemove));
+    }
+  })
+}
 const createModelPayment = (dateDeposit, amount, interest, nextDatePayment, balanceLoand, statusDeposit, idLoan) => {
   return {
     dateDeposit,
-    amount,
-    interest,
+    amount: Number(parseFloat(amount).toFixed(2)),
+    interest: Number(parseFloat(interest).toFixed(2)),
     nextDatePayment,
-    balanceLoand,
+    balanceLoand: Number(parseFloat(balanceLoand).toFixed(2)),
     statusDeposit,
     idLoan
   }
@@ -327,11 +403,21 @@ const createModelPayment = (dateDeposit, amount, interest, nextDatePayment, bala
 const createModelLoan = (dateLoan, amount, rateInterest, statusLoan, finishedDatePayment, idUser) => {
   return {
     dateLoan,
-    amount,
+    amount: Number(parseFloat(amount)),
     rateInterest,
     statusLoan,
     finishedDatePayment,
     idUser
+  }
+}
+
+const createModelIcomeExpense = (dateIncome, dateExpense, income, expenses, note) => {
+  return {
+    dateIncome,
+    dateExpense,
+    income: Number(parseFloat(income).toFixed(2)),
+    expenses: Number(parseFloat(expenses).toFixed(2)),
+    note
   }
 }
 
@@ -346,10 +432,51 @@ const consultPendingInteres = (idPayment) => {
   }
 }
 
+createIcome = async (modelIcomeExpense, callback) => {
+  let payload;
+  let response;
+  let balanceInterest = new BalanceInteres(modelIcomeExpense)
+
+  try {
+    let balanceCapital = await expensesIcomesService.consultBalanceCapital();
+    balanceCapital = balanceCapital[0];
+    if (balanceCapital) {
+      payload = {
+        balanceCapital: (modelIcomeExpense.income == 0 ? balanceCapital.balanceCapital : (balanceCapital.balanceCapital + modelIcomeExpense.income)),
+        balanceInterest: (modelIcomeExpense.income + balanceCapital.balanceInterest),
+      }
+      balanceInterest.save(async (error, balanceSaved) => {
+        if (error) {
+          return "Ha ocurrido un error interno al tratar de procesar la solicitud"
+        } else {
+          if (!balanceSaved) {
+            return "Error al tratar de procesar la solicitud"
+          }
+          try {
+            response = await expensesIcomesService.updateCapital(payload, balanceCapital._id);
+            if (response) {
+              console.log('response', response)
+              return callback(response)
+            }
+
+          } catch (error) {
+            callback(error)
+          }
+        }
+      })
+    }
+
+  } catch (error) {
+    console.log(error);
+  }
+
+}
+
 module.exports = {
   paymentRegister,
   listPayment,
   paymentById,
   paymentUpdateById,
-  paymentByIdLoan
+  paymentByIdLoan,
+  deletePayment
 };
