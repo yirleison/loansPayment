@@ -28,12 +28,35 @@ const createInteresPending = async (idPayment, interestModel) => {
   });
 }
 
-const consulInterestPending = async (idPayment) => {
+const consulInterestPending = async (id) => {
   interestLogger.info({
     message: "Funcionabilidad para listar un Interests por ID"
   });
   return new Promise((reject, resolve) => {
     Interest.findOne({ _id: id }, (error, interest) => {
+      if (error) {
+        reject(false);
+      } else {
+        if (!interest) {
+          reject(false);
+        } else {
+          interestLogger.info({
+            message: "Interests por ID listado exitosamente",
+            interestSaved: interest
+          });
+          resolve(interest);
+        }
+      }
+    });
+  })
+}
+
+const consulInterestPendingByIdPayment = async (idPayment) => {
+  interestLogger.info({
+    message: "Funcionabilidad para listar un Interests por ID"
+  });
+  return new Promise((reject, resolve) => {
+    Interest.findOne({ idPayment: idPayment }, (error, interest) => {
       if (error) {
         reject(false);
       } else {
@@ -76,5 +99,6 @@ const interestUpdateById = (id, payload) => {
 module.exports = {
   createInteresPending,
   consulInterestPending,
-  interestUpdateById
+  interestUpdateById,
+  consulInterestPendingByIdPayment
 }

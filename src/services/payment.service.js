@@ -27,7 +27,15 @@ const paymentById = async (id) => {
     message: "Inicio de funcionabilidad para el servicio listar pago por ID"
   });
   return new Promise((resolve, reject) => {
-    Payment.findOne({ _id: id }, (error, payment) => {
+    Payment.findOne({ _id: id }).populate(
+      { 
+        path: 'idLoan', 
+        populate: {
+          path: 'idUser', model: 'User'
+        }
+      }
+      
+      ).exec((error, payment) => {
       if (error) {
         reject(false);
       } else {
@@ -41,7 +49,7 @@ const paymentById = async (id) => {
   });
 };
 
-initialCreatedPayment = (modelPayment) => {
+const initialCreatedPayment = (modelPayment) => {
   payment = new Payment();
   payment = modelPayment;
 

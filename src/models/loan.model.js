@@ -7,7 +7,7 @@ const Loan = Schema ({
     rateInterest: Number,
     statusLoan: Boolean,
     finishedDatePayment: String,
-    idUser: String,
+    idUser: {type: Schema.ObjectId, ref: 'User'},
 });
 
 module.exports = mongoose.model('Loan', Loan);

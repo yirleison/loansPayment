@@ -97,8 +97,8 @@ const lastBalanceInterest = (req, res) => {
 const createCapital = async (req, res) => {
     let body = req.body;
     let balanceCapitalModel = new BalanceCapital({
-        balanceCapital: 0,
-        balanceInterest: 0
+        balanceCapital: body.balanceCapital,
+        balanceInterest: body.balanceInterest
     });
 
     try {
@@ -115,7 +115,29 @@ const createCapital = async (req, res) => {
     } catch (error) {
         console.log(error)
     }
+}
 
+const listCapital = async (req, res) => {
+    try {
+        let listCapital = await expensesIcomesService.consultBalanceCapital();
+        console.log(listCapital)
+        if(!listCapital) {
+            res.status(500).send({
+                status: "false",
+                message: "Ha ocurrido un error al tratar de registrar la solicitud"
+            });
+        }
+        else {
+            res.status(200).send(messages("OK", listCapital));
+        }
+        
+    } catch (error) {
+        res.status(500).send({
+            status: "false",
+            message: "Ha ocurrido un error al tratar de registrar la solicitud"
+        });
+         console.log(error)
+    }
 }
 
 const createModelBalanceInterest = (dateIncome, dateExpense, income, expenses, balanceInterest, note, payer) => {
@@ -133,5 +155,6 @@ const createModelBalanceInterest = (dateIncome, dateExpense, income, expenses, b
 module.exports = {
     createBalanceInterest,
     lastBalanceInterest,
-    createCapital
+    createCapital,
+    listCapital
 }

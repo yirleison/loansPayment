@@ -95,12 +95,12 @@ const consultBalanceInterest = async () => {
   })
 }
 
-const consultBalanceCapital = async () => {
+const consultBalanceCapital = () => {
   balanceCapilalLogger.info({
     message: "Funcionabilidad para listar el balance del capital"
   });
-  return new Promise((reject, resolve) => {
-    BalanceCapital.find({}, (balanceCapital, err) => {
+  return new Promise((resolve,reject) => {
+    BalanceCapital.find({}, (err,balanceCapital) => {
       if (err) {
         reject(err);
       } else {
