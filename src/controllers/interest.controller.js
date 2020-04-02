@@ -103,7 +103,32 @@ const listInterest = (req, res) => {
             }
         });
     }
-
+}
+const listInterestByIdPayment = (req, res) => {
+    interestLogger.info({
+        message: "Inicio de funcionabilidad para Interest pago por ID prestamo"
+    });
+    console.log(req.params.id )
+    Interest.find({ idPayment: req.params.id }, (error, interest) => {
+        if (error) {
+            res.status(500).send({
+                status: "false",
+                message: "La consulta a la base de datos no devolvio resultados"
+            });
+        } else {
+            if (!interest) {
+                res.status(400).send({
+                    status: "false",
+                    message: "Error al tratar de procesar la solicitud"
+                });
+            } else {
+                interestLogger.info({
+                    message: "listar Interest por ID realizado exitosamente"
+                });
+                res.status(200).send(messages("OK", interest));
+            }
+        }
+    });
 }
 
 const interestById = (req, res) => {
@@ -162,5 +187,6 @@ module.exports = {
     createInterest,
     listInterest,
     interestById,
-    interestUpdateById
+    interestUpdateById,
+    listInterestByIdPayment
 }

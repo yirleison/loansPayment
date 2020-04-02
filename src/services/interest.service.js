@@ -2,7 +2,7 @@ const Interest = require("../models/interest.model");
 const { messages } = require("../utils/messages");
 const { interestLogger } = require("../../logger");
 
-const createInteresPending = async (idPayment, interestModel) => {
+const createInteresPending = async (interestModel) => {
   let interest = new Interest(interestModel);
   interestLogger.info({
     message: "Inicio de funcionabilidad para crear un interes en mora"
@@ -53,10 +53,10 @@ const consulInterestPending = async (id) => {
 
 const consulInterestPendingByIdPayment = async (idPayment) => {
   interestLogger.info({
-    message: "Funcionabilidad para listar un Interests por ID"
+    message: "Funcionabilidad para listar un Interests por ID de pago" + idPayment
   });
-  return new Promise((reject, resolve) => {
-    Interest.findOne({ idPayment: idPayment }, (error, interest) => {
+  return new Promise((resolve,reject) => {
+    Interest.find({idPayment: idPayment}, (error, interest) => {
       if (error) {
         reject(false);
       } else {
@@ -65,7 +65,7 @@ const consulInterestPendingByIdPayment = async (idPayment) => {
         } else {
           interestLogger.info({
             message: "Interests por ID listado exitosamente",
-            interestSaved: interest
+            interest: interest
           });
           resolve(interest);
         }
@@ -86,7 +86,7 @@ const interestUpdateById = (id, payload) => {
         if (!interestUpdate) {
           reject(error);
         }
-        paymentLogger.info({
+        interestLogger.info({
           message: "Interest actualizado en la base de datos",
           interestUpdate: interestUpdate
         });
@@ -96,9 +96,33 @@ const interestUpdateById = (id, payload) => {
   });
 }
 
+const listInterestPending = () => {
+  interestLogger.info({
+    message: "Funcionabilidad para listar todos los intereses"
+  });
+  return new Promise((resolve,reject) => {
+    Interest.find({}, (error, interest) => {
+      if (error) {
+        reject(false);
+      } else {
+        if (!interest) {
+          reject(false);
+        } else {
+          interestLogger.info({
+            message: "Consulta lista de interes exitosamente",
+            interest: interest
+          });
+          resolve(interest);
+        }
+      }
+    });
+  })
+}
+
 module.exports = {
   createInteresPending,
   consulInterestPending,
   interestUpdateById,
-  consulInterestPendingByIdPayment
+  consulInterestPendingByIdPayment,
+  listInterestPending
 }
