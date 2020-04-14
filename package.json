@@ -4,7 +4,7 @@
   "description": "project for loan payments",
   "main": "index.js",
   "scripts": {
-    "start": "index.js",
+    "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,6 +22,7 @@
     "express": "^4.17.1",
     "moment": "^2.24.0",
     "mongoose": "^5.7.11",
+    "node-dockerignore": "0.0.1",
     "nodemon": "^2.0.2",
     "winston": "^3.2.1"
   }

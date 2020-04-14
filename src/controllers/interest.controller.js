@@ -183,10 +183,64 @@ const interestUpdateById = (req, res) => {
     });
 }
 
+const updateInteresById = (req, res) => {
+    interestLogger.info({
+        message: "Inicio de funcionabilidad para actualizar un interest por ID"
+      });
+      Interest.findByIdAndUpdate(_id,req.body,(error, interestUpdate) => {
+        if (error) {
+          res.status(500).send({
+            status: "false",
+            message: "La consulta a la base de datos no devolvio resultados"
+          });
+        } else {
+          if (!interestUpdate) {
+            res.status(400).send({
+              status: "false",
+              message: "Error al tratar de procesar la solicitud"
+            });
+          } else {
+            interestLogger.info({
+              message: "interest actualizado exitosamente"
+            });
+            res.status(200).send(messages("OK", interestUpdate));
+          }
+        }
+      });
+}
+
+const deleteInterest = (req, res) => {
+    interestLogger.info({
+        message: "Inicio de funcionabilidad para eliminar un interest por ID"
+      });
+      Interest.findByIdAndRemove(_id,(error, interestDelete) => {
+        if (error) {
+          res.status(500).send({
+            status: "false",
+            message: "La consulta a la base de datos no devolvio resultados"
+          });
+        } else {
+          if (!interestDelete) {
+            res.status(400).send({
+              status: "false",
+              message: "Error al tratar de procesar la solicitud"
+            });
+          } else {
+            interestLogger.info({
+              message: "interest eliminado exitosamente"
+            });
+            res.status(200).send(messages("OK", interestDelete));
+          }
+        }
+      });
+}
+
 module.exports = {
     createInterest,
     listInterest,
     interestById,
     interestUpdateById,
-    listInterestByIdPayment
+    listInterestByIdPayment,
+    updateInteresById,
+    deleteInterest
 }

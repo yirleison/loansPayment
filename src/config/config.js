@@ -33,7 +33,8 @@ process.env.SECRET_KEY = process.env.SECRET_KEY || 'hola-mundo';
 let urlDB;
 
  if (process.env.NODE_ENV === 'dev') {
-     urlDB = 'mongodb://localhost:27017/loanPayment';
+     //urlDB = 'mongodb://localhost:27017/loanPayment';
+     urlDB = 'mongodb://172.17.0.1:27017/loanPayment';
  }
  else {
     urlDB = process.env.MONGO_URI;
