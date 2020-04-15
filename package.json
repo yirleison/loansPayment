@@ -23,7 +23,7 @@
     "moment": "^2.24.0",
     "mongoose": "^5.7.11",
     "node-dockerignore": "0.0.1",
-    "nodemon": "^2.0.2",
+    "nodemon": "^2.0.3",
     "winston": "^3.2.1"
   }
 }

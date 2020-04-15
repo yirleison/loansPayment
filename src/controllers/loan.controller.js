@@ -89,7 +89,7 @@ const listLoan = (req, res) => {
   loanLogger.info({
     message: "Inicio de funcionabilidad para listar prestamos"
   });
-  Loan.find({}, (error, loans) => {
+  Loan.find({}).populate({path: 'idUser'}).exec((error, loans) => {
     if (error) {
       res.status(500).send({
         status: "false",
