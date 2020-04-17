@@ -7,6 +7,7 @@ const User = Schema ({
     documentNumber: String,
     accountType: String,
     accountNumber: String,
+    phone: String,
     email: String,
     password: String
 });

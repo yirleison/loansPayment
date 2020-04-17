@@ -13,7 +13,8 @@ const createUser = async (req, res) => {
     user.documentType = payload.documentType; 
     user.documentNumber = payload.documentNumber; 
     user.accountType = payload.accountType; 
-    user.accountNumber = payload.accountNumber; 
+    user.accountNumber = payload.accountNumber;
+    user.phone = payload.phone;
     user.email = payload.email; 
     user.password = payload.password; 
 
