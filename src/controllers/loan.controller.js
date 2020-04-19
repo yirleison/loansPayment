@@ -24,11 +24,11 @@ const createLoand = (req, res) => {
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
 
-  consola('modelo loan',loan)
+  consola('modelo loan', loan)
 
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
-  loan.save(function(error, loanSaved) {
+  loan.save(function (error, loanSaved) {
     if (error) {
       res.status(500).send({
         status: "false",
@@ -89,7 +89,7 @@ const listLoan = (req, res) => {
   loanLogger.info({
     message: "Inicio de funcionabilidad para listar prestamos"
   });
-  Loan.find({}).populate({path: 'idUser'}).exec((error, loans) => {
+  Loan.find({}).populate({ path: 'idUser' }).exec((error, loans) => {
     if (error) {
       res.status(500).send({
         status: "false",
@@ -108,16 +108,16 @@ const listLoan = (req, res) => {
         /*if (loans.finishedDatePayment == 'null') {
           loans.finishedDatePayment = 'Pendiente'
         }*/
-        loans.map(function(dato){
-          if(dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0){
+        loans.map(function (dato) {
+          if (dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0) {
             dato.finishedDatePayment = 'Pendiente';
-            
+
           }
           return dato;
         });
 
         //res.status(200).send(messages("OK", loans));
-        res.status(200).send({data: loans});
+        res.status(200).send({ data: loans });
       }
     }
   });
@@ -191,11 +191,54 @@ const loanUpdateById = (req, res) => {
   });
 };
 
+const loanByIdUser = (req, res) => {
+  loanLogger.info({
+    message: "Inicio de funcionabilidad para listar prestamo por ID de usuario"
+  });
+  Loan.find({ idUser: req.params.id }).populate({ path: 'idUser' }).exec((error, loans) => {
+    if (error) {
+      res.status(500).send({
+        status: "false",
+        message: "La consulta a la base de datos no devolvio resultados"
+      });
+    } else {
+      if (!loans) {
+        res.status(400).send({
+          status: "false",
+          message: "Error al tratar de procesar la solicitud"
+        });
+      } else {
+        loanLogger.info({
+          message: "listar prestamo por ID de usuario realizado exitosamente"
+        });
+        console.log(loans)
+        let p = loans.filter(x => x.idUser.status == '1')
+        if (p.length > 0 ) {
+          p.map(function (dato) {
+            if (dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0) {
+              dato.finishedDatePayment = 'Pendiente';
+            }
+
+            return dato;
+          })
+        }
+        else {
+          res.status(200).send({ data: p });
+        }
+        res.status(200).send({ data: p });
+        //res.status(200).send(messages("OK", loans));
+       
+      }
+    }
+  });
+}
+
 const calInteresValue = (interes, amount) => (amount * interes) / 100;
 
 module.exports = {
   createLoand,
   listLoan,
   loanById,
-  loanUpdateById
+  loanUpdateById,
+  loanByIdUser
 };

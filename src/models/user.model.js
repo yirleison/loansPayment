@@ -7,9 +7,12 @@ const User = Schema ({
     documentNumber: String,
     accountType: String,
     accountNumber: String,
+    bank: String,
     phone: String,
     email: String,
-    password: String
+    password: String,
+    photo: String,
+    status: String
 });
 
 module.exports = mongoose.model('User', User);
