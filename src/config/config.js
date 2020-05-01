@@ -24,7 +24,7 @@ process.env.CADUCIDAD_TOKEN = 60 * 60 * 24 * 30;
 //===================================
 //Secret key
 //===================================
-process.env.SECRET_KEY = process.env.SECRET_KEY || 'hola-mundo';
+process.env.SECRET_KEY = process.env.SECRET_KEY || 'calve_secreta_curso';
 
 //===================================
 //Base de datos

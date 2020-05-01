@@ -12,7 +12,8 @@ const User = Schema ({
     email: String,
     password: String,
     photo: String,
-    status: String
+    status: String,
+    role: String
 });
 
 module.exports = mongoose.model('User', User);

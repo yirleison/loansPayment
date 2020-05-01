@@ -4,7 +4,9 @@ const fs = require('fs');
 const { userLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
 const User = require("../models/user.model");
+const bcrypt = require('bcrypt');
 const { uploapFile } = require('../services/upload.service')
+const { createToken } = require('../services/oaut.service/oauth.service')
 
 const createUser = async (req, res) => {
   userLogger.info({
@@ -24,29 +26,35 @@ const createUser = async (req, res) => {
   user.password = payload.password;
   user.photo = payload.photo;
   user.status = payload.status;
+  user.role = payload.role;
 
-
-  user.save((error, userSaved) => {
-    if (error) {
-      res.status(500).send({
-        status: "false",
-        message: "Ha ocurrido un error al tratar de registrar la solicitud"
-      });
-    } else {
-      if (!userSaved) {
-        res.status(400).send({
-          status: "false",
-          message: "Error al tratar de procesar la solicitud"
-        });
-      }
-      userLogger.info({
-        message: "Usuario creado en la base de datos",
-        userSaved: userSaved
-      });
-      //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
-      res.status(200).send(messages("OK", userSaved));
+  if (typeof (user.password != null || user.password != '' || user.password != 'undefned')) {
+    let encrip = '';
+    if (encrip = encryptPassword(user.password)) {
+      user.password = encrip;
     }
-  });
+    user.save((error, userSaved) => {
+      if (error) {
+        res.status(500).send({
+          status: "false",
+          message: "Ha ocurrido un error al tratar de registrar la solicitud"
+        });
+      } else {
+        if (!userSaved) {
+          res.status(400).send({
+            status: "false",
+            message: "Error al tratar de procesar la solicitud"
+          });
+        }
+        userLogger.info({
+          message: "Usuario creado en la base de datos",
+          userSaved: userSaved
+        });
+        //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
+        res.status(200).send(messages("OK", userSaved));
+      }
+    })
+  }
 };
 
 const listUser = (req, res) => {
@@ -127,7 +135,7 @@ const changeStatus = (req, res) => {
   userLogger.info({
     message: "Inicio funcionalidad para actualizar un Usuario"
   });
-  User.findByIdAndUpdate(req.params.id, {status: req.body.status},{new: true}, (error, userUpdate) => {
+  User.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true }, (error, userUpdate) => {
     if (error) {
       res.status(400).send({
         status: "false",
@@ -140,10 +148,10 @@ const changeStatus = (req, res) => {
           message: "Error al tratar de procesar la solicitud"
         });
       }
-      res.status(200).send(messages("OK", {status: userUpdate.status}));
+      res.status(200).send(messages("OK", { status: userUpdate.status }));
     }
   })
-} 
+}
 
 function getImageFile(req, res) {
   var imageFIle = req.params.imageFile;
@@ -160,6 +168,55 @@ function getImageFile(req, res) {
   });
 }
 
+/**Funcionalidades para login de usuarios */
+function loginUser(req, res) {
+
+  let { email, password, gethash } = req.body;
+  //var password = params.password;
+
+  User.findOne({ email: email.toLowerCase() }, (err, user) => {
+    if (err) {
+      res.status(500).send({ message: 'Error en la petición' });
+    }
+
+    else {
+
+      if (!user) {
+        res.status(404).send({ message: 'El usuario no existe' });
+      }
+      else {
+        // Comprobar el password...
+        bcrypt.compare(password, user.password, (err, check) => {
+          if (check) {
+            // Devuelvo los datos del usuario logeado...
+            console.log(gethash)
+            if (gethash) {
+              // Devolver un token de jwt
+              res.status(200).send({
+                token: createToken(user),
+                user: user
+              });
+            }
+
+            else {
+              res.status(200).send({ user });
+            }
+          }
+
+          else {
+            res.status(404).send({ message: 'El usuario no ha podido logearse' });
+          }
+        });
+      }
+    }
+  });
+}
+
+const encryptPassword = (password) => {
+  const salt = bcrypt.genSaltSync(10)
+  return bcrypt.hashSync(password, salt)
+}
+
 
 module.exports = {
   createUser,
@@ -167,5 +224,6 @@ module.exports = {
   listUserById,
   getImageFile,
   updateUser,
-  changeStatus
+  changeStatus,
+  loginUser
 }
