@@ -171,25 +171,25 @@ function getImageFile(req, res) {
 /**Funcionalidades para login de usuarios */
 function loginUser(req, res) {
 
-  let { email, password, gethash } = req.body;
+  let { email, password } = req.body;
+  let gethash = true
   //var password = params.password;
 
   User.findOne({ email: email.toLowerCase() }, (err, user) => {
     if (err) {
-      res.status(500).send({ message: 'Error en la petición' });
+      res.status(500).send(messages('fasle','Error en la petición'));
     }
 
     else {
 
       if (!user) {
-        res.status(404).send({ message: 'El usuario no existe' });
+        res.status(404).send(messages('false', 'El usuario no existe'));
       }
       else {
         // Comprobar el password...
         bcrypt.compare(password, user.password, (err, check) => {
           if (check) {
             // Devuelvo los datos del usuario logeado...
-            console.log(gethash)
             if (gethash) {
               // Devolver un token de jwt
               res.status(200).send({
@@ -204,7 +204,7 @@ function loginUser(req, res) {
           }
 
           else {
-            res.status(404).send({ message: 'El usuario no ha podido logearse' });
+            res.status(404).send(messages('false','El usuario no ha podido logearse' ));
           }
         });
       }

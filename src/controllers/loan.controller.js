@@ -1,8 +1,10 @@
 const Loan = require("../models/loan.model");
 const Payment = require("../models/Payment.model");
+const User = require("../models/user.model");
 const paymentService = require("../services/payment.service");
 const moment = require("moment");
 const { loanLogger } = require("../../logger");
+const { userLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
 const consola = console.log;
 
@@ -208,26 +210,48 @@ const loanByIdUser = (req, res) => {
           message: "Error al tratar de procesar la solicitud"
         });
       } else {
+        let p
         loanLogger.info({
           message: "listar prestamo por ID de usuario realizado exitosamente"
         });
-        console.log(loans)
-        let p = loans.filter(x => x.idUser.status == '1')
-        if (p.length > 0 ) {
-          p.map(function (dato) {
-            if (dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0) {
-              dato.finishedDatePayment = 'Pendiente';
-            }
-
-            return dato;
-          })
+        if (loans.length > 0) {
+          p = loans.filter(x => x.idUser.status == '1')
+          if (p.length > 0) {
+            p.map(function (dato) {
+              if (dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0) {
+                dato.finishedDatePayment = 'Pendiente';
+              }
+              return dato;
+            })
+          }
+          else {
+            //console.log('Loan----------> entro else')
+            return res.status(200).send({ data: p });
+          }
         }
         else {
-          res.status(200).send({ data: p });
+          User.findOne({ _id: req.params.id }, (error, user) => {
+            if (error) {
+              res.status(500).send({
+                status: "false",
+                message: "La consulta a la base de datos no devolvio resultados"
+              });
+            } else {
+              if (!user) {
+                res.status(400).send({
+                  status: "false",
+                  message: "Error al tratar de procesar la solicitud"
+                });
+              } else {
+                userLogger.info({
+                  message: "lista de usuario Realizada de manera exitosa"
+                });
+               return res.status(200).send({ data: { user} });
+              }
+            }
+          });
         }
-        res.status(200).send({ data: p });
-        //res.status(200).send(messages("OK", loans));
-       
+        return res.status(200).send({ data: p });
       }
     }
   });
