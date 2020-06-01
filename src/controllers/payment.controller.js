@@ -266,7 +266,7 @@ const paymentUpdateById = async (req, res) => {
         let consultPayment = await paymentServices.paymentById(idPayment);
         let consultLoan = await loanServices.loanById(consultPayment.idLoan);
         //Consulto el interes pendiente
-        console.log('Consulta interes pendiente', await consultInteresPending(consultPayment))
+        // console.log('Consulta interes pendiente', await consultInteresPending(consultPayment))
         //Pendiente consultar en la colección iterestPending si el cliente tiene intereses en mora relacionados a el id de la cuota
         //Pendiente crear el servicio
         if (consultPayment) {
@@ -492,6 +492,45 @@ const paymentUpdateById = async (req, res) => {
         res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
       }
       break;
+    case "2":
+      let consultPayment = await paymentServices.paymentById(idPayment);
+      let consultLoan = await loanServices.loanById(consultPayment.idLoan);
+      let { fullName } = consultLoan.idUser
+      amount = payload.amount;
+      aux = (amount - consultPayment.balanceLoand);
+      //Creo un modelo de pagos para actualizar una cuota de pago existente....
+      paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
+        consultPayment.nextDatePayment = null, 0, true, consultPayment.idLoan._id)
+      try {
+        paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
+        if (paymentUpdate) {
+          consultLoan.finishedDatePayment = moment().format("YYYY-MM-DD");
+          consultLoan.statusLoan = true;
+          let modelUpdateLoan = createModelLoan(consultLoan.dateLoan, consultLoan.amount, consultLoan.rateInterest,
+            consultLoan.statusLoan, consultLoan.finishedDatePayment, consultLoan.idUser);
+          //consola(modelUpdateLoan)
+          let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
+          if (loanUpdate) {
+            //Creo un modelo para crear una entrada de dinero y actualizo el capital
+            modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName);
+            createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
+              if (data) {
+                //res.status(200).send(messages("OK", paymentService));
+                consola(messages('OK', 'El prestamo se ha pagado en su totalidad'))
+                res.status(200).send(messages('OK', 'El prestamo se ha pagado en su totalidad'));
+              }
+              if (error) {
+                console.log(error)
+              }
+            });
+
+          }
+        }
+      } catch (error) {
+        consola(error)
+        res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
+      }
+      break
     default:
       consola("Entro al error del swicth");
       break;
@@ -523,6 +562,7 @@ const deletePayment = (req, res) => {
     }
   })
 }
+
 const createModelPayment = (dateDeposit, amount, interest, nextDatePayment, balanceLoand, statusDeposit, idLoan) => {
   return {
     dateDeposit,
@@ -695,6 +735,30 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
   }
 }
 
+const consultPaymentDate = async (req, res) => {
+  try {
+    let payment = await paymentServices.paymentById(req.params.id);
+    let fecha = moment(payment.nextDatePayment)
+    const diff = moment(fecha).diff(moment(), 'days');
+    let dias_mes = moment(fecha, "YYYY-MM").daysInMonth()
+    let dias_contados = dias_mes - diff
+    let calCurrentAmount = calCurrentValue(payment.interest, dias_contados, dias_mes)
+    
+   /* consola('Dias---------> contados', diff)
+    consola('Dia mes---------> dia mes', dias_mes)
+    consola('Dias de diferencia--------->', dias_contados)
+  */
+    res.status(200).send({ currentAmount: calCurrentAmount.round(2), total: (payment.balanceLoand + calCurrentAmount.round(2)) })
+  } catch (error) {
+    consola(error)
+  }
+}
+
+Number.prototype.round = function (places) {
+  return +(Math.round(this + "e+" + places) + "e-" + places);
+}
+const calCurrentValue = (interes, days, month) => (interes / month) * days;
+
 module.exports = {
   paymentRegister,
   listPayment,
@@ -702,5 +766,6 @@ module.exports = {
   paymentUpdateById,
   paymentByIdLoan,
   deletePayment,
-  paymentByIdUser
+  paymentByIdUser,
+  consultPaymentDate
 };

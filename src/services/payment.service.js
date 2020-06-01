@@ -49,6 +49,7 @@ const paymentById = async (id) => {
   });
 };
 
+
 const initialCreatedPayment = (modelPayment) => {
   payment = new Payment();
   payment = modelPayment;

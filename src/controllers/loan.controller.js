@@ -26,7 +26,7 @@ const createLoand = (req, res) => {
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
 
-  consola('modelo loan', loan)
+  //consola('modelo loan', loan)
 
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
@@ -129,7 +129,7 @@ const loanById = (req, res) => {
   loanLogger.info({
     message: "Inicio de funcionabilidad para listar prestamo por ID"
   });
-  Loan.findById({ _id: req.params.id }, (error, loan) => {
+  Loan.findById({ _id: req.params.id }).populate({ path: 'idUser' }).exec((error, loan) => {
     if (error) {
       res.status(500).send({
         status: "false",
@@ -145,6 +145,7 @@ const loanById = (req, res) => {
         loanLogger.info({
           message: "listar prestamo por ID realizado exitosamente"
         });
+       
         res.status(200).send(messages("OK", loan));
       }
     }

@@ -8,7 +8,7 @@ const loanById  = async (id) => {
   });
 
   return new Promise((resolve, reject) => {
-    Loan.findOne({ _id: id }, (error, loan) => {
+    Loan.findOne({ _id: id }).populate({ path: 'idUser' }).exec((error, loan) => {
         if (error) {
             reject(false);
         } else {

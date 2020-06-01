@@ -161,7 +161,6 @@ function getImageFile(req, res) {
     if (exists) {
       res.sendFile(path.resolve(pathFIle));
     }
-
     else {
       res.status(404).send({ message: 'No se ha encontrado la imagen' });
     }
