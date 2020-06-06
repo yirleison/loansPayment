@@ -8,6 +8,8 @@ api.get('/pago/:id', paymentController.paymentById);
 api.get('/pago-fecha/:id', paymentController.consultPaymentDate);
 api.get('/pago-prestamo/:id', paymentController.paymentByIdLoan);
 api.put('/pago/:id', paymentController.paymentUpdateById);
+api.put('/pago/:id', paymentController.paymentUpdateById);
+api.put('/actualizar-pago/:id', paymentController.updateDataPaynentById);
 api.delete('/pago/:id', paymentController.deletePayment);
 
 module.exports = api;

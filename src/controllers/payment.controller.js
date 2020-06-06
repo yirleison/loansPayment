@@ -523,7 +523,6 @@ const paymentUpdateById = async (req, res) => {
                 console.log(error)
               }
             });
-
           }
         }
       } catch (error) {
@@ -559,6 +558,35 @@ const deletePayment = (req, res) => {
       });
       //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
       res.status(200).send(messages("OK", paymentRemove));
+    }
+  })
+}
+
+const updateDataPaynentById = (req, res) => {
+  const payload = req.body;
+  const idPayment = req.params.id;
+  payload.dateDeposit = (payload.dateDeposit == null || payload.dateDeposit == 'null' || payload.dateDeposit == '' ? null : moment( payload.dateDeposit).format( "YYYY-MM"))
+  payload.nextDatePayment = (payload.nextDatePayment == null || payload.nextDatePayment == 'null' || payload.nextDatePayment == '' ? null : moment( payload.nextDatePayment).format( "YYYY-MM"))
+  payload.statusDeposit = ( payload.statusDeposit == '1' ? false : true)
+  Payment.findByIdAndUpdate(idPayment, payload, (error, paymentUpdate) => {
+    if (error) {
+      res.status(500).send({
+        status: "false",
+        message: "Ha ocurrido un error interno al tratar de procesar la solicitud"
+      });
+    }
+    else {
+      if (!paymentUpdate) {
+        res.status(400).send({
+          status: "false",
+          message: "Error al tratar de procesar la solicitud"
+        });
+      }
+      paymentLogger.info({
+        message: "Deposito actualizado en la base de datos",
+        paymentUpdate: paymentUpdate
+      });
+      res.status(200).send(messages("OK", paymentUpdate));
     }
   })
 }
@@ -671,7 +699,7 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
     let balanceCapital = await expensesIcomesService.consultBalanceCapital();
     balanceCapital = balanceCapital[0];
     if (balanceCapital) {
-      //Caso cuando el clidatePaymentnte paga la totalidad del prestamo
+      //Caso cuando el cliente  paga la totalidad del prestamo
       if (amount1 == 1 && amountCapital > 0 && amountInterest > 0) {
         payload = {
           balanceCapital: (balanceCapital.balanceCapital + amountCapital),
@@ -743,11 +771,11 @@ const consultPaymentDate = async (req, res) => {
     let dias_mes = moment(fecha, "YYYY-MM").daysInMonth()
     let dias_contados = dias_mes - diff
     let calCurrentAmount = calCurrentValue(payment.interest, dias_contados, dias_mes)
-    
-   /* consola('Dias---------> contados', diff)
-    consola('Dia mes---------> dia mes', dias_mes)
-    consola('Dias de diferencia--------->', dias_contados)
-  */
+
+    /* consola('Dias---------> contados', diff)
+     consola('Dia mes---------> dia mes', dias_mes)
+     consola('Dias de diferencia--------->', dias_contados)
+   */
     res.status(200).send({ currentAmount: calCurrentAmount.round(2), total: (payment.balanceLoand + calCurrentAmount.round(2)) })
   } catch (error) {
     consola(error)
@@ -767,5 +795,6 @@ module.exports = {
   paymentByIdLoan,
   deletePayment,
   paymentByIdUser,
-  consultPaymentDate
+  consultPaymentDate,
+  updateDataPaynentById
 };
