@@ -145,7 +145,7 @@ const loanById = (req, res) => {
         loanLogger.info({
           message: "listar prestamo por ID realizado exitosamente"
         });
-       
+
         res.status(200).send(messages("OK", loan));
       }
     }
@@ -195,23 +195,23 @@ const loanUpdateById = (req, res) => {
 };
 
 const loanByIdUser = (req, res) => {
+  let p = null
   loanLogger.info({
     message: "Inicio de funcionabilidad para listar prestamo por ID de usuario"
   });
   Loan.find({ idUser: req.params.id }).populate({ path: 'idUser' }).exec((error, loans) => {
     if (error) {
-      res.status(500).send({
+     return res.status(500).send({
         status: "false",
         message: "La consulta a la base de datos no devolvio resultados"
       });
     } else {
       if (!loans) {
-        res.status(400).send({
+      return  res.status(400).send({
           status: "false",
           message: "Error al tratar de procesar la solicitud"
         });
       } else {
-        let p
         loanLogger.info({
           message: "listar prestamo por ID de usuario realizado exitosamente"
         });
@@ -225,10 +225,10 @@ const loanByIdUser = (req, res) => {
               return dato;
             })
           }
-          else {
+        
             //console.log('Loan----------> entro else')
             return res.status(200).send({ data: p });
-          }
+          
         }
         else {
           User.findOne({ _id: req.params.id }, (error, user) => {
@@ -247,12 +247,12 @@ const loanByIdUser = (req, res) => {
                 userLogger.info({
                   message: "lista de usuario Realizada de manera exitosa"
                 });
-               return res.status(200).send({ data: { user} });
+                return res.status(200).send({ data: { user } });
               }
             }
           });
         }
-        return res.status(200).send({ data: p });
+       // return res.status(200).send({ data: p });
       }
     }
   });

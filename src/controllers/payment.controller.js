@@ -275,7 +275,7 @@ const paymentUpdateById = async (req, res) => {
           if (amount > consultPayment.balanceLoand) {
             aux = (amount - consultPayment.balanceLoand);
             if (aux == consultPayment.interest) {
-              consola("Caso cuando el clidatePaymentnte paga la totalidad del prestamo", aux);
+              consola("Caso cuando el clidate  paga la totalidad del prestamo", aux);
               //Creo un modelo de pagos para actualizar una cuota de pago existente....
               paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
                 consultPayment.nextDatePayment = null, 0, true, consultPayment.idLoan)
