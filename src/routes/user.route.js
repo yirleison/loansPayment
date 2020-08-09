@@ -9,6 +9,7 @@ api.post('/registrar-usuario', userController.createUser);
 //api.get('/usuarios',[ensuerAuth], userController.listUser);
 api.get('/usuarios', userController.listUser);
 api.get('/usuario/:id', userController.listUserById);
+api.put('/usuario/:id', userController.updateUser);
 api.get('/imagen/:imageFile', userController.getImageFile);
 api.use(fileUpload());
 api.put('/upload',uploadService.uploapFile);

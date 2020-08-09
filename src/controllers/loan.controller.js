@@ -12,7 +12,8 @@ const consola = console.log;
 const createLoand = (req, res) => {
   const loan = new Loan();
   let body = req.body;
-  body.dateLoan = moment().format("YYYY-MM-DD");
+  //consola('dateloan ------>', body.dateLoan)
+  body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
 
@@ -26,7 +27,7 @@ const createLoand = (req, res) => {
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
 
-  //consola('modelo loan', loan)
+  consola('modelo loan', loan)
 
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
