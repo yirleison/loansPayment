@@ -12,23 +12,16 @@ const consola = console.log;
 const createLoand = (req, res) => {
   const loan = new Loan();
   let body = req.body;
-  //consola('dateloan ------>', body.dateLoan)
-  body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
-  let dateLoan = body.dateLoan;
-  let nextDatePayment = dateLoan;
+  let  = body.dateLoan
+  let currentDate = getCurrenDateAndNexPaymentDate(body.dateLoan);
 
-  nextDatePayment = moment()
-    .add(1, "month")
-    .format("YYYY-MM-DD");
-  loan.dateLoan = dateLoan;
+  loan.dateLoan = currentDate.current_date;
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
   loan.statusLoan = false;
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
-
-  consola('modelo loan', loan)
-
+  //consola(currentDate)
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
   loan.save(function (error, loanSaved) {
@@ -58,7 +51,7 @@ const createLoand = (req, res) => {
       payment.interest = parseFloat(
         calInteresValue(loan.rateInterest, loan.amount)
       );
-      payment.nextDatePayment = nextDatePayment;
+      payment.nextDatePayment = currentDate.nextDate_paymentDate;
       payment.balanceLoand = loanSaved.amount;
       payment.statusDeposit = false;
       payment.idLoan = loanSaved._id;
@@ -260,6 +253,13 @@ const loanByIdUser = (req, res) => {
 }
 
 const calInteresValue = (interes, amount) => (amount * interes) / 100;
+
+const getCurrenDateAndNexPaymentDate = (date) => {
+  let currentDate = moment(new Date(date)).format('YYYY-MM-DD')
+  let nextDatePayment = moment(new Date(date)).add(1, 'month').format('YYYY-MM-DD');
+
+  return { current_date: currentDate, nextDate_paymentDate: nextDatePayment }
+}
 
 module.exports = {
   createLoand,
