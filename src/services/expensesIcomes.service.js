@@ -1,9 +1,26 @@
 const BalanceInteres = require("../models/expensesIcomes.model");
-const BalanceCapital = require('../models/balanceCapital.model')
+const BalanceCapital = require('../models/balanceCapital.model');
+const ExpensesIcomes = require("../models/expensesIcomes.model");
 const { balanceInterestLogger } = require("../../logger");
 const { balanceCapilalLogger } = require("../../logger");
 
-const createIcome =  (body) => {
+const createExpensesOrIcomes = async (payload) => {
+  let expensesIcomes = new ExpensesIcomes(payload)
+  return new Promise((reject, resolve) => {
+    expensesIcomes.save(async (error, expensesIcomesSave) => {
+      if (error) {
+        return reject("Ha ocurrido un error interno al tratar de procesar la solicitud")
+      } else {
+        if (!expensesIcomesSave) {
+          return reject("Error al tratar de procesar la solicitud")
+        }
+        return reject("Error al tratar de procesar la solicitud")
+      }
+    })
+  })
+}
+
+const createIcome = (body) => {
   balanceInteres = new ExpensesIcomes();
   balanceInteres.dateIncome = moment(body.dateIncome).format("YYYY-MM-DD");
   balanceInteres.dateExpense = null;
@@ -12,63 +29,9 @@ const createIcome =  (body) => {
   balanceInteres.note = body.note;
   let auxInterest = 0;
   let auxCapital = 0;
-  let payload;
+
   return new Promise((reject, resolve) => {
-    try {
-      let balanceCapital =  expensesIcomesService.consultBalanceCapital();
-      console.log(balanceCapital[0]._id)
-      if (balanceCapital[0].balanceCapital == 0 && balanceCapital[0].balanceInterest == 0 && body.expenses > 0) {
-        console.log('No se puede crear una salida de dinero por que no hay saldo en caja')
-      }
-      else {
-        if (body.expenses) {
-          if (body.expenses > balanceCapital[0].balanceInterest) {
-            auxInterest = (body.expenses - balanceCapital[0].balanceInterest);
-            if ((auxInterest - balanceCapital[0].balanceCapital)) {
-              auxCapital = (balanceCapital[0].balanceCapital - auxInterest);
-              payload = {
-                balanceCapital: auxCapital,
-                balanceInterest: 0,
-              }
-            }
-          }
-          if (body.expenses < balanceCapital[0].balanceInterest) {
-            auxInterest = (balanceCapital[0].balanceInterest - body.expenses);
-            payload = {
-              balanceCapital: balanceCapital[0].balanceCapital,
-              balanceInterest: auxInterest,
-            }
-          }
-          if (body.expenses == balanceCapital[0].balanceInterest) {
-            payload = {
-              balanceCapital: balanceCapital[0].balanceCapital,
-              balanceInterest: 0,
-            }
-          }
-          if (body.expenses > balanceCapital[0].balanceInterest) {
-            auxInterest = (body.expenses - balanceCapital[0].balanceInterest);
-            if (auxInterest == balanceCapital[0].balanceCapital) {
-              payload = {
-                balanceCapital: 0,
-                balanceInterest: 0,
-              }
-            }
-          }
-        }
-        //Actualizo la colección de balance capital...
-        try {
-          let updateCapital = expensesIcomesService.updateCapital(payload, balanceCapital[0]._id);
-          console.log(updateCapital);
-          resolve(updateCapital)
-        } catch (error) {
-          console.log('error', error);
-          reject(error)
-        }
-      }
-    } catch (error) {
-      console.log('error', error);
-      reject(error)
-    }
+ 
   })
 }
 
@@ -99,8 +62,8 @@ const consultBalanceCapital = () => {
   balanceCapilalLogger.info({
     message: "Funcionabilidad para listar el balance del capital"
   });
-  return new Promise((resolve,reject) => {
-    BalanceCapital.find({}, (err,balanceCapital) => {
+  return new Promise((resolve, reject) => {
+    BalanceCapital.find({}, (err, balanceCapital) => {
       if (err) {
         reject(err);
       } else {
@@ -142,7 +105,7 @@ const createCapital = (model) => {
 }
 
 const updateCapital = (payload, id) => {
-  return new Promise((reject,resolve) => {
+  return new Promise((reject, resolve) => {
     BalanceCapital.findByIdAndUpdate(id, payload, { new: true }, (error, capitalUpdate) => {
       if (error) {
         reject(error);
@@ -162,6 +125,7 @@ const updateCapital = (payload, id) => {
 
 
 module.exports = {
+  createExpensesOrIcomes,
   consultBalanceInterest,
   consultBalanceCapital,
   createCapital,

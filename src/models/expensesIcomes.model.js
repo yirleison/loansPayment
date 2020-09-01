@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { interestLogger } = require('../../logger');
 const Schema = mongoose.Schema;
 
 const ExpensesIcomesSchema = new Schema({
@@ -6,7 +7,9 @@ const ExpensesIcomesSchema = new Schema({
     dateExpense: Date,
     income: Number,
     expenses: Number,
-    note: String
+    note: String,
+    type: Number,
+    id:String 
 });
 
 module.exports = mongoose.model('ExpensesIcomes', ExpensesIcomesSchema);

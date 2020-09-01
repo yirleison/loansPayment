@@ -28,7 +28,7 @@ const createUser = async (req, res) => {
   user.status = payload.status;
   user.role = payload.role;
 
-  /*if (
+  if (
     payload.password
   ) {
     user.password = encryptPassword(payload.password);
@@ -53,28 +53,29 @@ const createUser = async (req, res) => {
         res.status(200).send(messages("OK", userSaved));
       }
     });
-  }else {*/
-  user.save((error, userSaved) => {
-    if (error) {
-      res.status(500).send({
-        status: "false",
-        message: "Ha ocurrido un error al tratar de registrar la solicitud",
-      });
-    } else {
-      if (!userSaved) {
-        res.status(400).send({
+  } else {
+    user.save((error, userSaved) => {
+      if (error) {
+        res.status(500).send({
           status: "false",
-          message: "Error al tratar de procesar la solicitud",
+          message: "Ha ocurrido un error al tratar de registrar la solicitud",
         });
+      } else {
+        if (!userSaved) {
+          res.status(400).send({
+            status: "false",
+            message: "Error al tratar de procesar la solicitud",
+          });
+        }
+        userLogger.info({
+          message: "Usuario creado en la base de datos",
+          userSaved: userSaved,
+        });
+        //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
+        res.status(200).send(messages("OK", userSaved));
       }
-      userLogger.info({
-        message: "Usuario creado en la base de datos",
-        userSaved: userSaved,
-      });
-      //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
-      res.status(200).send(messages("OK", userSaved));
-    }
-  });
+    });
+  }
 };
 
 const listUser = (req, res) => {

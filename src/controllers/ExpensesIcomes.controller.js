@@ -62,7 +62,6 @@ const createBalanceInterest = async (req, res) => {
             }
             //Actualizo la colección de balance capital...
             try {
-
                 let updateCapital = await expensesIcomesService.updateCapital(payload, balanceCapital[0]._id);
                 console.log(updateCapital);
             } catch (error) {

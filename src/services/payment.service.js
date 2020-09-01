@@ -50,10 +50,9 @@ const paymentById = async (id) => {
 };
 
 
-const initialCreatedPayment = (modelPayment) => {
+const initialCreatedPayment = async (modelPayment) => {
   payment = new Payment();
   payment = modelPayment;
-
   return new Promise((resolve, reject) => {
     payment.save((error, paymentSaved) => {
       if (error) {
@@ -76,7 +75,7 @@ const initialCreatedPayment = (modelPayment) => {
   });
 };
 
-const paymenUpdateById = (idPayment, payload) => {
+const paymenUpdateById = async (idPayment, payload) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para actualizar un deposito"
   });

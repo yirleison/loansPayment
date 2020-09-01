@@ -3,10 +3,11 @@ const paymentServices = require("../services/payment.service");
 const loanServices = require("../services/loans.service");
 const Payment = require("../models/Payment.model");
 const BalanceCapital = require("../models/balanceCapital.model");
-const BalanceInteres = require("../models/expensesIcomes.model");
+const ExpensesIcomes = require("../models/expensesIcomes.model");
 //Services
 const interestServices = require('../services/interest.service');
 const expensesIcomesService = require('../services/expensesIcomes.service');
+const balanceCapitalService = require('../services/balanceCapital.service');
 
 const { paymentLogger } = require("../../logger");
 const { balanceCapilalLogger } = require("../../logger");
@@ -290,7 +291,7 @@ const paymentUpdateById = async (req, res) => {
                   let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
                   if (loanUpdate) {
                     //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + consultLoan._id);
+                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
                       if (data) {
                         //res.status(200).send(messages("OK", paymentService));
@@ -324,7 +325,7 @@ const paymentUpdateById = async (req, res) => {
                 let createPayment = await paymentServices.createPayment(paymentService);
                 if (createPayment) {
                   //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id);
+                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
                   createIcome(modelIcomeExpense, 0, 0, 0, 0, 1, (consultPayment.balanceLoand - consultPayment.interest), (consultPayment.interest), function (data, error) {
                     if (data) {
                       //Pendiente manejar el error... 
@@ -362,7 +363,7 @@ const paymentUpdateById = async (req, res) => {
                 try {
                   let createPayment = await paymentServices.createPayment(paymentService);
                   if (createPayment) {
-                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + consultLoan._id);
+                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 0, 1, 0, 0, 0, (consultPayment.balanceLoand - aux), consultPayment.interest, function (data, error) {
                       if (data) {
                         //Pendiente manejar el error...
@@ -404,7 +405,7 @@ const paymentUpdateById = async (req, res) => {
                     modelInterest = createModelInterestPending(moment().format("YYYY-MM-DD"), (consultPayment.interest - amount), false, createPayment._id)
                     if (await interestServices.createInteresPending(modelInterest)) {
                       //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                      modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + consultLoan._id);
+                      modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
                     }
                     createIcome(modelIcomeExpense, 0, 0, 1, 0, 0, 0, 0, function (data, error) {
                       if (data) {
@@ -442,7 +443,7 @@ const paymentUpdateById = async (req, res) => {
                 let createPayment = await paymentServices.createPayment(paymentService);
                 if (createPayment) {
                   //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id);
+                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
                   createIcome(modelIcomeExpense, 0, 0, 0, 1, 0, 0, consultPayment.interest, function (data, error) {
                     if (data) {
                       //Pensiente manejar el error...
@@ -512,7 +513,7 @@ const paymentUpdateById = async (req, res) => {
           let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
           if (loanUpdate) {
             //Creo un modelo para crear una entrada de dinero y actualizo el capital
-            modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName);
+            modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
             createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
               if (data) {
                 //res.status(200).send(messages("OK", paymentService));
@@ -537,7 +538,6 @@ const paymentUpdateById = async (req, res) => {
 };
 
 const deletePayment = (req, res) => {
-
   console.log(req.params)
   Payment.findOneAndRemove(req.params.id, (error, paymentRemove) => {
     if (error) {
@@ -565,9 +565,9 @@ const deletePayment = (req, res) => {
 const updateDataPaynentById = (req, res) => {
   const payload = req.body;
   const idPayment = req.params.id;
-  payload.dateDeposit = (payload.dateDeposit == null || payload.dateDeposit == 'null' || payload.dateDeposit == '' ? null : moment( payload.dateDeposit).format( "YYYY-MM"))
-  payload.nextDatePayment = (payload.nextDatePayment == null || payload.nextDatePayment == 'null' || payload.nextDatePayment == '' ? null : moment( payload.nextDatePayment).format( "YYYY-MM"))
-  payload.statusDeposit = ( payload.statusDeposit == '1' ? false : true)
+  payload.dateDeposit = (payload.dateDeposit == null || payload.dateDeposit == 'null' || payload.dateDeposit == '' ? null : moment(payload.dateDeposit).format("YYYY-MM"))
+  payload.nextDatePayment = (payload.nextDatePayment == null || payload.nextDatePayment == 'null' || payload.nextDatePayment == '' ? null : moment(payload.nextDatePayment).format("YYYY-MM"))
+  payload.statusDeposit = (payload.statusDeposit == '1' ? false : true)
   Payment.findByIdAndUpdate(idPayment, payload, (error, paymentUpdate) => {
     if (error) {
       res.status(500).send({
@@ -657,12 +657,14 @@ updateInterestPending = async (payload, id) => {
   }
 }
 
-const createModelIcomeExpense = (dateIncome, dateExpense, income, expenses, note) => {
+const createModelIcomeExpense = (dateIncome, dateExpense, income, expenses, note, type, id) => {
   return {
     dateIncome,
     dateExpense,
     income: Number(parseFloat(income).toFixed(2)),
     expenses: Number(parseFloat(expenses).toFixed(2)),
+    type,
+    id,
     note
   }
 }
@@ -693,8 +695,6 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
  */
   let payload;
   let response;
-  let balanceInterest = new BalanceInteres(modelIcomeExpense)
-  consola(modelIcomeExpense)
   try {
     let balanceCapital = await expensesIcomesService.consultBalanceCapital();
     balanceCapital = balanceCapital[0];
@@ -733,31 +733,28 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
           balanceInterest: (modelIcomeExpense.income + balanceCapital.balanceInterest),
         }
       }
-      consola(payload)
-      balanceInterest.save(async (error, balanceSaved) => {
-        if (error) {
-          return "Ha ocurrido un error interno al tratar de procesar la solicitud"
-        } else {
-          if (!balanceSaved) {
-            return "Error al tratar de procesar la solicitud"
-          }
+      //Update capital
+      try {
+        let balanceCapitalServiceResponse = await balanceCapitalService.updateCapital(payload, balanceCapital._id)
+        if (balanceCapitalServiceResponse) {
           try {
-            response = await expensesIcomesService.updateCapital(payload, balanceCapital._id);
-            if (response) {
-              console.log('response', response)
-              return callback(response)
+            let expensesIcomesServiceResponse = await expensesIcomesService.createExpensesOrIcomes(modelIcomeExpense);
+            if (expensesIcomesServiceResponse) {
+              //console.log('response', response)
+              return callback(expensesIcomesServiceResponse)
             }
-
           } catch (error) {
             callback(error)
           }
         }
-      })
+      } catch (error) {
+        consola('Error expensesIcomesServiceResponse -------> ', error)
+        callback(error)
+      }
     }
     else {
       callback('No se ha podido generar el registro del capital asociado a este pago')
     }
-
   } catch (error) {
     console.log(error);
   }

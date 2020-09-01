@@ -2,21 +2,24 @@ const Loan = require("../models/loan.model");
 const Payment = require("../models/Payment.model");
 const User = require("../models/user.model");
 const paymentService = require("../services/payment.service");
+const BalanceCapital = require("../models/balanceCapital.model");
+const expensesIcomesService = require("../services/expensesIcomes.service");
+const ExpensesIcomes = require("../models/expensesIcomes.model");
 const moment = require("moment");
 const { loanLogger } = require("../../logger");
 const { userLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
+const balanceCapitalService = require("../services/balanceCapital.service");
+const { error } = require("winston");
 const consola = console.log;
+let expensesIcomes;
 
-
-const createLoand = (req, res) => {
+const createLoand = async (req, res) => {
   const loan = new Loan();
   let body = req.body;
-  //consola('dateloan ------>', body.dateLoan)
   body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
-
   nextDatePayment = moment()
     .add(1, "month")
     .format("YYYY-MM-DD");
@@ -26,12 +29,8 @@ const createLoand = (req, res) => {
   loan.statusLoan = false;
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
-
-  consola('modelo loan', loan)
-
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
-
-  loan.save(function (error, loanSaved) {
+  loan.save(async (error, loanSaved) => {
     if (error) {
       res.status(500).send({
         status: "false",
@@ -48,16 +47,12 @@ const createLoand = (req, res) => {
         message: "Prestamo creado en la base de datos",
         loanSave: loanSaved
       });
-
       payment = new Payment();
-
       payment.dateDeposit = null;
       payment.valueDeposit = 0;
       payment.amount = 0;
       //Calcular el valor del interes inicial
-      payment.interest = parseFloat(
-        calInteresValue(loan.rateInterest, loan.amount)
-      );
+      payment.interest = parseFloat(calInteresValue(loan.rateInterest, loan.amount));
       payment.nextDatePayment = nextDatePayment;
       payment.balanceLoand = loanSaved.amount;
       payment.statusDeposit = false;
@@ -66,24 +61,57 @@ const createLoand = (req, res) => {
         message: "Funcionabilidad ",
         modelCreate: payment
       });
-      paymentService.initialCreatedPayment(payment).then(
-        resolve => {
-          if (resolve) {
-            res.status(200).send({
-              status: "Ok",
-              loanSaved
-            });
-          } else {
-            //En caso tal de que no se pueda crear el pago de una cuota inicial se debe proceder a crearlo por la interfaz del módulo de payment
-            consola("no se pudo crear el pago inicial");
-          }
-        },
-        error => {
-          if (error) {
-            consola("Error al tratar de iniciar un pago");
+      try {
+        let paymentResponse = await paymentService.initialCreatedPayment(payment)
+        if (paymentResponse) {
+          // Crete model expersesIcomes
+          expensesIcomes = createModelExpensesIcomes(null, moment(body.dateLoan).format("YYYY-MM-DD"), 0, loan.amount, "Prestamo a...user ", 1, loanSaved._id.toString())
+          try {
+            let expensesIcomesResponse = await expensesIcomesService.createExpensesOrIcomes(expensesIcomes)
+            if (expensesIcomesResponse) {
+              try {
+                let consultBalanceCapitalServiceResponse = await balanceCapitalService.consultBalanceCapital();
+                if (consultBalanceCapitalServiceResponse) {
+                  let payload = balanceCapitalService.validateOutput(expensesIcomes.expenses, consultBalanceCapitalServiceResponse)
+                  if (payload.noCapital == 0) {
+                    try {
+                      rollbackLoan(loanSaved._id, function (data, error) {
+                        if (data) {
+                          res.status(200).send({
+                            status: "false",
+                            message: 'El monto ingresado supera el capital'
+                          });
+                        }
+                        if (error) {
+                          console.log(error)
+                        }
+                      })
+                    } catch (error) {
+                      consola(error)
+                    }
+                  }
+                  else {
+                    //Hacer rolback de expensesIcomesResponse - paymentResponse loan
+                    let balanceCapitalUpdateResponse = await balanceCapitalService.updateCapital(payload, consultBalanceCapitalServiceResponse[0]._id)
+                    if (balanceCapitalUpdateResponse) {
+                      res.status(200).send({
+                        status: "Ok",
+                        loanSaved
+                      });
+                    }
+                  }
+                }
+              } catch (error) {
+                consola(error)
+              }
+            }
+          } catch (error) {
+            consola(error)
           }
         }
-      );
+      } catch (error) {
+        console.log('Error paymentResponse -----> ', error)
+      }
     }
   });
 };
@@ -202,13 +230,13 @@ const loanByIdUser = (req, res) => {
   });
   Loan.find({ idUser: req.params.id }).populate({ path: 'idUser' }).exec((error, loans) => {
     if (error) {
-     return res.status(500).send({
+      return res.status(500).send({
         status: "false",
         message: "La consulta a la base de datos no devolvio resultados"
       });
     } else {
       if (!loans) {
-      return  res.status(400).send({
+        return res.status(400).send({
           status: "false",
           message: "Error al tratar de procesar la solicitud"
         });
@@ -226,10 +254,10 @@ const loanByIdUser = (req, res) => {
               return dato;
             })
           }
-        
-            //console.log('Loan----------> entro else')
-            return res.status(200).send({ data: p });
-          
+
+          //console.log('Loan----------> entro else')
+          return res.status(200).send({ data: p });
+
         }
         else {
           User.findOne({ _id: req.params.id }, (error, user) => {
@@ -253,13 +281,81 @@ const loanByIdUser = (req, res) => {
             }
           });
         }
-       // return res.status(200).send({ data: p });
+        // return res.status(200).send({ data: p });
       }
     }
   });
 }
 
+const rollbackLoan = (id, callback) => {
+  let flag = false;
+  console.log('rollbackLoan ------> rollbackLoan')
+  Loan.findByIdAndRemove({ _id: id }, (error, loanRemove) => {
+    if (error) {
+      return callback(null, error)
+    }
+    else {
+      if (!loanRemove) {
+        return callback(null, error)
+      }
+      console.log('loanRemove ------> ', loanRemove)
+      Payment.deleteOne({ idLoan: loanRemove._id }, (error, paymentRemove) => {
+        if (error) {
+          console.log('paymentRemoveerror ------> ', error)
+          return callback(null, error)
+        }
+        else {
+          if (!paymentRemove) {
+            return callback(null, error)
+          }
+          console.log('paymentRemove ------> ', paymentRemove)
+          ExpensesIcomes.find({}, (error, expensesIcomesResult) => {
+            if (error) {
+              return callback(null, error)
+            }
+            else {
+              if (!expensesIcomesResult) {
+                return callback(null, error)
+              }
+
+              let dataexpensesIcome = expensesIcomesResult.filter(x => x.id == loanRemove._id.toString());
+              console.log('dataexpensesIcome--------> ', dataexpensesIcome)
+              ExpensesIcomes.findByIdAndRemove({ _id: dataexpensesIcome[0]._id }, (error, expensesIcomesRemove) => {
+                if (error) {
+                  return callback(null, error)
+                }
+                else {
+                  if (!expensesIcomesRemove) {
+                    return callback(null, error)
+                  }
+                  return callback(true)
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+
+}
+
 const calInteresValue = (interes, amount) => (amount * interes) / 100;
+const createModelExpensesIcomes = (dateIncome, dateExpense, income, expenses, note, type, id) => {
+  return {
+    dateIncome,
+    dateExpense,
+    income: parseFloat(income),
+    expenses: parseFloat(expenses),
+    note,
+    type,
+    id
+  }
+}
+
+const getNameUser = (idUser) => {
+
+}
 
 module.exports = {
   createLoand,
