@@ -17,6 +17,7 @@ let expensesIcomes;
 const createLoand = async (req, res) => {
   const loan = new Loan();
   let body = req.body;
+<<<<<<< HEAD
   body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
@@ -24,11 +25,21 @@ const createLoand = async (req, res) => {
     .add(1, "month")
     .format("YYYY-MM-DD");
   loan.dateLoan = dateLoan;
+=======
+  let  = body.dateLoan
+  let currentDate = getCurrenDateAndNexPaymentDate(body.dateLoan);
+
+  loan.dateLoan = currentDate.current_date;
+>>>>>>> origin
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
   loan.statusLoan = false;
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
+<<<<<<< HEAD
+=======
+  //consola(currentDate)
+>>>>>>> origin
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
   loan.save(async (error, loanSaved) => {
     if (error) {
@@ -52,8 +63,15 @@ const createLoand = async (req, res) => {
       payment.valueDeposit = 0;
       payment.amount = 0;
       //Calcular el valor del interes inicial
+<<<<<<< HEAD
       payment.interest = parseFloat(calInteresValue(loan.rateInterest, loan.amount));
       payment.nextDatePayment = nextDatePayment;
+=======
+      payment.interest = parseFloat(
+        calInteresValue(loan.rateInterest, loan.amount)
+      );
+      payment.nextDatePayment = currentDate.nextDate_paymentDate;
+>>>>>>> origin
       payment.balanceLoand = loanSaved.amount;
       payment.statusDeposit = false;
       payment.idLoan = loanSaved._id;
@@ -355,6 +373,13 @@ const createModelExpensesIcomes = (dateIncome, dateExpense, income, expenses, no
 
 const getNameUser = (idUser) => {
 
+}
+
+const getCurrenDateAndNexPaymentDate = (date) => {
+  let currentDate = moment(new Date(date)).format('YYYY-MM-DD')
+  let nextDatePayment = moment(new Date(date)).add(1, 'month').format('YYYY-MM-DD');
+
+  return { current_date: currentDate, nextDate_paymentDate: nextDatePayment }
 }
 
 module.exports = {

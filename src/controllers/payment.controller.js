@@ -784,6 +784,13 @@ Number.prototype.round = function (places) {
 }
 const calCurrentValue = (interes, days, month) => (interes / month) * days;
 
+const getCurrenDateAndNexPaymentDate = (date) => {
+  let currentDate = moment(new Date(date)).format('YYYY-MM-DD')
+  let nextDatePayment = moment(new Date(date)).add(1, 'month').format('YYYY-MM-DD');
+
+  return { current_date: currentDate, nextDate_paymentDate: nextDatePayment }
+}
+
 module.exports = {
   paymentRegister,
   listPayment,
