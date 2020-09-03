@@ -1,6 +1,8 @@
 const Loan = require("../models/loan.model");
 const { messages } = require("../utils/messages");
 const { loanLogger } = require("../../logger");
+const { paymentById, paymenUpdateById } = require("./payment.service");
+const { paymentByIdLoan } = require("../controllers/payment.controller");
 
 const loanById  = async (id) => {
   loanLogger.info({
@@ -42,6 +44,25 @@ const loanUpdate = (idLoan, payload) => {
       }
     });
   })
+}
+
+const updateLoanError =(idLoan)=>{
+  paymentByIdLoanResponse= paymentByIdLoan(idLoan)
+    loanLogger.info({
+      message:"Inicio funcionalidad para solucionar error en el valor del prestamo"
+    })
+    if(paymentByIdLoanResponse)){
+      if(paymentByIdLoanResponse[0].length>1){
+        loanLogger.info({
+          message:"hay mas de un pago ya realizado, comuniquese con el ADMINISTRADOR"
+        })
+
+      }/*if(paymentByIdLoanResponse[0].length==1){
+        
+
+      }*/
+    }
+
 }
 
 module.exports = {

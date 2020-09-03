@@ -11,6 +11,7 @@ const { userLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
 const balanceCapitalService = require("../services/balanceCapital.service");
 const { error } = require("winston");
+const { validateBalanceForLoan } = require("../services/balanceCapital.service");
 const consola = console.log;
 let expensesIcomes;
 
@@ -33,91 +34,110 @@ const createLoand = async (req, res) => {
   loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
-  loan.save(async (error, loanSaved) => {
-    if (error) {
-      res.status(500).send({
-        status: "false",
-        message: "Ha ocurrido un error al tratar de registrar la solicitud"
-      });
-    } else {
-      if (!loanSaved) {
-        res.status(400).send({
+
+  let validateBalanceForLoanResponse = validateBalanceForLoan(loan.amount)
+  if (validateBalanceForLoanResponse) {
+    loan.save(async (error, loanSaved) => {
+      if (error) {
+        res.status(500).send({
           status: "false",
-          message: "Error al tratar de procesar la solicitud"
+          message: "Ha ocurrido un error al tratar de registrar la solicitud"
         });
-      }
-      loanLogger.info({
-        message: "Prestamo creado en la base de datos",
-        loanSave: loanSaved
-      });
-      payment = new Payment();
-      payment.dateDeposit = null;
-      payment.valueDeposit = 0;
-      payment.amount = 0;
-      //Calcular el valor del interes inicial
-      payment.interest = parseFloat(calInteresValue(loan.rateInterest, loan.amount));
-      payment.nextDatePayment = nextDatePayment;
-      payment.balanceLoand = loanSaved.amount;
-      payment.statusDeposit = false;
-      payment.idLoan = loanSaved._id;
-      loanLogger.info({
-        message: "Funcionabilidad ",
-        modelCreate: payment
-      });
-      try {
-        let paymentResponse = await paymentService.initialCreatedPayment(payment)
-        if (paymentResponse) {
-          // Crete model expersesIcomes
-          expensesIcomes = createModelExpensesIcomes(null, moment(body.dateLoan).format("YYYY-MM-DD"), 0, loan.amount, "Prestamo a...user ", 1, loanSaved._id.toString())
-          try {
-            let expensesIcomesResponse = await expensesIcomesService.createExpensesOrIcomes(expensesIcomes)
-            if (expensesIcomesResponse) {
-              try {
-                let consultBalanceCapitalServiceResponse = await balanceCapitalService.consultBalanceCapital();
-                if (consultBalanceCapitalServiceResponse) {
-                  let payload = balanceCapitalService.validateOutput(expensesIcomes.expenses, consultBalanceCapitalServiceResponse)
-                  if (payload.noCapital == 0) {
-                    try {
-                      rollbackLoan(loanSaved._id, function (data, error) {
-                        if (data) {
-                          res.status(200).send({
-                            status: "false",
-                            message: 'El monto ingresado supera el capital'
-                          });
-                        }
-                        if (error) {
-                          console.log(error)
-                        }
-                      })
-                    } catch (error) {
-                      consola(error)
+      } else {
+        if (!loanSaved) {
+          res.status(400).send({
+            status: "false",
+            message: "Error al tratar de procesar la solicitud"
+          });
+        }
+        loanLogger.info({
+          message: "Prestamo creado en la base de datos",
+          loanSave: loanSaved
+        });
+        payment = new Payment();
+        payment.dateDeposit = null;
+        payment.valueDeposit = 0;
+        payment.amount = 0;
+        //Calcular el valor del interes inicial
+        payment.interest = parseFloat(calInteresValue(loan.rateInterest, loan.amount));
+        payment.nextDatePayment = nextDatePayment;
+        payment.balanceLoand = loanSaved.amount;
+        payment.statusDeposit = false;
+        payment.idLoan = loanSaved._id;
+        loanLogger.info({
+          message: "Funcionabilidad ",
+          modelCreate: payment
+        });
+        try {
+          let paymentResponse = await paymentService.initialCreatedPayment(payment)
+          if (paymentResponse) {
+            // Crete model expersesIcomes
+            expensesIcomes = createModelExpensesIcomes(null, moment(body.dateLoan).format("YYYY-MM-DD"), 0, loan.amount, "Prestamo a...user ", 1, loanSaved._id.toString())
+            try {
+              let expensesIcomesResponse = await expensesIcomesService.createExpensesOrIcomes(expensesIcomes)
+              if (expensesIcomesResponse) {
+                try {
+                  let consultBalanceCapitalServiceResponse = await balanceCapitalService.consultBalanceCapital();
+                  if (consultBalanceCapitalServiceResponse) {
+                    let payload = balanceCapitalService.validateOutput(expensesIcomes.expenses, consultBalanceCapitalServiceResponse)
+                    /*if (payload.noCapital == 0) {
+                      try {
+                        rollbackLoan(loanSaved._id, function (data, error) {
+                          if (data) {
+                            res.status(200).send({
+                              status: "false",
+                              message: 'El monto ingresado supera el capital'
+                            });
+                          }
+                          if (error) {
+                            console.log(error)
+                          }
+                        })
+                      } catch (error) {
+                        consola(error)
+                      }
                     }
-                  }
-                  else {
-                    //Hacer rolback de expensesIcomesResponse - paymentResponse loan
-                    let balanceCapitalUpdateResponse = await balanceCapitalService.updateCapital(payload, consultBalanceCapitalServiceResponse[0]._id)
-                    if (balanceCapitalUpdateResponse) {
+  
+                    else {
+                      //Hacer rolback de expensesIcomesResponse - paymentResponse loan
+                      let balanceCapitalUpdateResponse = await balanceCapitalService.updateCapital(payload, consultBalanceCapitalServiceResponse[0]._id)
+                      if (balanceCapitalUpdateResponse) {
+                        res.status(200).send({
+                          status: "Ok",
+                          loanSaved
+                        });
+                      }
+                    }*/
+                    if (payload) {
                       res.status(200).send({
                         status: "Ok",
                         loanSaved
                       });
                     }
                   }
+                } catch (error) {
+                  consola(error)
                 }
-              } catch (error) {
-                consola(error)
               }
+            } catch (error) {
+              consola(error)
             }
-          } catch (error) {
-            consola(error)
           }
+        } catch (error) {
+          console.log('Error paymentResponse -----> ', error)
         }
-      } catch (error) {
-        console.log('Error paymentResponse -----> ', error)
       }
-    }
+    });
+  }res.status(200).send({
+    status: "false",
+    message: 'El monto ingresado supera el capital'
   });
-};
+
+} 
+
+
+
+
 
 const listLoan = (req, res) => {
   loanLogger.info({
@@ -290,7 +310,7 @@ const loanByIdUser = (req, res) => {
   });
 }
 
-const rollbackLoan = (id, callback) => {
+/*const rollbackLoan = (id, callback) => {
   let flag = false;
   console.log('rollbackLoan ------> rollbackLoan')
   Loan.findByIdAndRemove({ _id: id }, (error, loanRemove) => {
@@ -341,7 +361,7 @@ const rollbackLoan = (id, callback) => {
     }
   })
 
-}
+}*/
 
 const calInteresValue = (interes, amount) => (amount * interes) / 100;
 const createModelExpensesIcomes = (dateIncome, dateExpense, income, expenses, note, type, id) => {

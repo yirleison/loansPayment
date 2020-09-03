@@ -68,10 +68,10 @@ const updateCapital = async (payload, id) => {
 
 const validateOutput = (expenses, balanceCapital) => {
     let payload;
-    if (balanceCapital[0].balanceCapital == 0 && balanceCapital[0].balanceInterest == 0 && expenses > 0) {
+    /*if (balanceCapital[0].balanceCapital == 0 && balanceCapital[0].balanceInterest == 0 && expenses > 0) {
         console.log('No se puede crear una salida de dinero por que no hay saldo en caja')
     }
-    else {
+    else {*/
         if (expenses) {
             if (expenses > balanceCapital[0].balanceInterest) {
                 auxInterest = (expenses - balanceCapital[0].balanceInterest);
@@ -113,14 +113,28 @@ const validateOutput = (expenses, balanceCapital) => {
                     }
                 }
             }
-            if(expenses > (balanceCapital[0].balanceCapital + balanceCapital[0].balanceInterest)){
+            /*if(expenses > (balanceCapital[0].balanceCapital + balanceCapital[0].balanceInterest)){
                 payload = {
                     noCapital: 0
                 }
-            }
+            }*/
         }
-    }
+    //}
     return payload
+}
+
+const validateBalanceForLoan = (amount) => {
+    let capital
+// Consulta por el balanceCapital, suma el balance intere + el balance capital luego logica
+            if(balanceCapital[0].balanceCapital>0){
+                if(amount > (balanceCapital[0].balanceCapital + balanceCapital[0].balanceInterest)){
+                    capital = {
+                        noCapital: 0
+                    }
+                } 
+
+            }
+        return capital
 }
 
 
@@ -128,5 +142,6 @@ module.exports = {
     createCapital,
     updateCapital,
     validateOutput,
-    consultBalanceCapital
+    consultBalanceCapital,
+    validateBalanceForLoan
 }
