@@ -177,7 +177,7 @@ const paymentByIdLoan = async (req, res) => {
   });
 };
 
-const paymentByIdUser = async (req, res) => {    
+const paymentByIdUser = async (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
