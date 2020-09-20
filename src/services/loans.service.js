@@ -24,6 +24,26 @@ const loanById  = async (id) => {
   })
 };
 
+const loanByIdUser  = async (id) => {
+  loanLogger.info({
+    message: "Inicio de funcionabilidad para el servicio listar prestamo por ID"
+  });
+
+  return new Promise((resolve, reject) => {
+    Loan.findOne({ idUser: id }, (error, loan) => {
+        if (error) {
+            reject(false);
+        } else {
+          if (!loan) {
+            reject(false);
+          } else {
+            resolve(loan)
+          }
+        }
+      });
+    })
+};
+
 const loanUpdate = (idLoan, payload) => {
   loanLogger.info({
     message: "Inicio de funcionabilidad para el servicio actualizar prestamo por ID"
@@ -51,7 +71,7 @@ const updateLoanError =(idLoan)=>{
     loanLogger.info({
       message:"Inicio funcionalidad para solucionar error en el valor del prestamo"
     })
-    if(paymentByIdLoanResponse)){
+    if(paymentByIdLoanResponse){
       if(paymentByIdLoanResponse[0].length>1){
         loanLogger.info({
           message:"hay mas de un pago ya realizado, comuniquese con el ADMINISTRADOR"
@@ -62,10 +82,11 @@ const updateLoanError =(idLoan)=>{
 
       }*/
     }
-
+  
 }
 
 module.exports = {
   loanById,
-  loanUpdate
+  loanUpdate,
+  loanByIdUser
 };

@@ -181,55 +181,19 @@ const paymentByIdUser = async (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
-  Payment.find({ idUser: req.params.id }).sort({ statusDeposit: false }).exec(async (error, payment) => {
-    if (error) {
-      res.status(500).send({
-        status: "false",
-        message: "La consulta a la base de datos no devolvio resultados"
-      });
-    } else {
-      if (!payment) {
-        res.status(400).send({
-          status: "false",
-          message: "Error al tratar de procesar la solicitud"
-        });
-      } else {
-        paymentLogger.info({
-          message: "listar pago por ID realizado exitosamente"
-        });
-        console.log('pago', payment)
-        //Consulto el interes pendiente
-        let dataInterestPending;
-        let consulInterestPendingByIdPayment
 
-        let p = [];
-        let t = []
-        //objectInterest;
-        try {
-          for (let i = 0; i < payment.length; i++) {
-            consulInterestPendingByIdPayment = await interestServices.consulInterestPendingByIdPayment(payment[i]._id)
-            p.push(...consulInterestPendingByIdPayment)
-          }
-          payment.forEach((dat) => {
-            t.push({
-              _id: dat._id,
-              dateDeposit: dat.dateDeposit,
-              amount: dat.amount,
-              interest: dat.interest,
-              nextDatePayment: dat.nextDatePayment,
-              balanceLoand: dat.balanceLoand,
-              statusDeposit: dat.statusDeposit,
-              idLoan: dat.idLoan,
-              interestPending: getPendingInterest(p, dat._id)
-            })
-          })
-          res.status(200).send(messages('OK', t))
-        } catch (error) {
-          console.log('Falta personalizar el error', error)
-        }
+  try {
+    let loanResponse = await loanServices.loanByIdUser(req.params.id);
+    if(loanResponse){
+      let paymentByIdLoan = await paymentServices.paymentByIdLoan(loanResponse._id)
+      if(paymentByIdLoan){
+        res.status(200).send(messages('OK', paymentByIdLoan))
       }
     }
-  });
+  } catch (error) {
+    
+  }
+ 
 };
 
 getPendingInterest = (data, id) => {

@@ -14,28 +14,47 @@ const createPayment = async (payload) => {
         }
         paymentLogger.info({
           message: "Deposito creado en la base de datos",
-          paymentSaved: paymentSaved
+          paymentSaved: paymentSaved,
         });
         resolve(paymentSaved);
       }
     });
-  })
-}
+  });
+};
 
 const paymentById = async (id) => {
   paymentLogger.info({
-    message: "Inicio de funcionabilidad para el servicio listar pago por ID"
+    message: "Inicio de funcionabilidad para el servicio listar pago por ID",
   });
   return new Promise((resolve, reject) => {
-    Payment.findOne({ _id: id }).populate(
-      { 
-        path: 'idLoan', 
+    Payment.findOne({ _id: id })
+      .populate({
+        path: "idLoan",
         populate: {
-          path: 'idUser', model: 'User'
+          path: "idUser",
+          model: "User",
+        },
+      })
+      .exec((error, payment) => {
+        if (error) {
+          reject(false);
+        } else {
+          if (!payment) {
+            reject(false);
+          } else {
+            resolve(payment);
+          }
         }
-      }
-      
-      ).exec((error, payment) => {
+      });
+  });
+};
+
+const paymentByIdLoan = async (id) => {
+  paymentLogger.info({
+    message: "Inicio de funcionabilidad para el servicio listar pago por ID",
+  });
+  return new Promise((resolve, reject) => {
+    Payment.find({ idLoan: id }, (error, payment) => {
       if (error) {
         reject(false);
       } else {
@@ -49,8 +68,7 @@ const paymentById = async (id) => {
   });
 };
 
-
-const initialCreatedPayment = async (modelPayment) => {
+const schedulePayment = async (modelPayment) => {
   payment = new Payment();
   payment = modelPayment;
   return new Promise((resolve, reject) => {
@@ -58,7 +76,7 @@ const initialCreatedPayment = async (modelPayment) => {
       if (error) {
         res.status(500).send({
           status: "false",
-          message: "Ha ocurrido un error al tratar de registrar la solicitud"
+          message: "Ha ocurrido un error al tratar de registrar la solicitud",
         });
       } else {
         if (!paymentSaved) {
@@ -66,9 +84,9 @@ const initialCreatedPayment = async (modelPayment) => {
         }
         paymentLogger.info({
           message: "Deposito creado en la base de datos",
-          paymentSaved: paymentSaved
+          paymentSaved: paymentSaved,
         });
-        resolve(paymentSaved)
+        resolve(paymentSaved);
         //Enviar un push al fron para indicarle al usuario de que debe de crearle una cuata de apgo al usuario
       }
     });
@@ -77,29 +95,35 @@ const initialCreatedPayment = async (modelPayment) => {
 
 const paymenUpdateById = async (idPayment, payload) => {
   paymentLogger.info({
-    message: "Inicio de funcionabilidad para actualizar un deposito"
+    message: "Inicio de funcionabilidad para actualizar un deposito",
   });
   return new Promise((resolve, reject) => {
-    Payment.findByIdAndUpdate(idPayment, payload,{new:true}, (error, paymentUpdate) => {
-      if (error) {
-        reject(error);
-      } else {
-        if (!paymentUpdate) {
+    Payment.findByIdAndUpdate(
+      idPayment,
+      payload,
+      { new: true },
+      (error, paymentUpdate) => {
+        if (error) {
           reject(error);
+        } else {
+          if (!paymentUpdate) {
+            reject(error);
+          }
+          paymentLogger.info({
+            message: "Deposito actualizado en la base de datos",
+            paymentUpdate: paymentUpdate,
+          });
+          resolve(paymentUpdate);
         }
-        paymentLogger.info({
-          message: "Deposito actualizado en la base de datos",
-          paymentUpdate: paymentUpdate
-        });
-        resolve(paymentUpdate);
       }
-    });
+    );
   });
-}
+};
 
 module.exports = {
   paymentById,
-  initialCreatedPayment,
+  schedulePayment,
   paymenUpdateById,
-  createPayment
+  createPayment,
+  paymentByIdLoan,
 };

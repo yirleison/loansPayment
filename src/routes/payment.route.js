@@ -11,5 +11,6 @@ api.put('/pago/:id', paymentController.paymentUpdateById);
 api.put('/pago/:id', paymentController.paymentUpdateById);
 api.put('/actualizar-pago/:id', paymentController.updateDataPaynentById);
 api.delete('/pago/:id', paymentController.deletePayment);
+api.get('/pagos-cliente/:id', paymentController.paymentByIdUser);
 
 module.exports = api;

@@ -6,15 +6,15 @@ const { balanceCapilalLogger } = require("../../logger");
 
 const createExpensesOrIcomes = async (payload) => {
   let expensesIcomes = new ExpensesIcomes(payload)
-  return new Promise((reject, resolve) => {
+  return new Promise((resolve, reject) => {
     expensesIcomes.save(async (error, expensesIcomesSave) => {
       if (error) {
-        return reject("Ha ocurrido un error interno al tratar de procesar la solicitud")
+        return reject(error)
       } else {
         if (!expensesIcomesSave) {
-          return reject("Error al tratar de procesar la solicitud")
+          return reject(error)
         }
-        return reject("Error al tratar de procesar la solicitud")
+        return resolve(expensesIcomesSave)
       }
     })
   })
