@@ -11,241 +11,235 @@ const { loanLogger } = require("../../logger");
 const { userLogger } = require("../../logger");
 const { messages } = require("../utils/messages");
 const balanceCapitalService = require("../services/balanceCapital.service");
-const { error, log } = require("winston");
-const {
-  validateBalanceForLoan,
-} = require("../services/balanceCapital.service");
+const { error } = require("winston");
+const { validateBalanceForLoan } = require("../services/balanceCapital.service");
 const consola = console.log;
 let expensesIcomes;
 
 const createLoand = async (req, res) => {
   const loan = new Loan();
   let body = req.body;
-  body.dateLoan = moment(new Date()).format("YYYY-MM-DD");
+  body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
-  nextDatePayment = moment().add(1, "month").format("YYYY-MM-DD");
-
+  nextDatePayment = moment()
+    .add(1, "month")
+    .format("YYYY-MM-DD");
   loan.dateLoan = dateLoan;
-  let = body.dateLoan;
+  let = body.dateLoan
   let currentDate = getCurrenDateAndNexPaymentDate(body.dateLoan);
   loan.dateLoan = currentDate.current_date;
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
   loan.statusLoan = false;
-  loan.finishedDatePayment = body.finishedDatePayment;
+  loan.finishedDatePayment = body.finishedDatePayment
   loan.idUser = body.idUser;
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
-  try {
-    let consultBalanceCapital = await balanceCapitalService.consultBalanceCapital();
-    if (consultBalanceCapital) {
-      if (validateBalanceForLoan(loan.amount, consultBalanceCapital)) {
-        //Create loan
-        loan.save(async (error, loanSaved) => {
-          if (error) {
-            res.status(500).send({
-              status: "false",
-              message:
-                "Ha ocurrido un error al tratar de registrar la solicitud",
-            });
-          } else {
-            if (!loanSaved) {
-              res.status(400).send({
-                status: "false",
-                message: "Error al tratar de procesar la solicitud",
-              });
-            } else {
-              loanLogger.info({
-                message: "Prestamo creado en la base de datos",
-                loanSave: loanSaved,
-              });
-              //Create pyament model
-              payment = new Payment();
-              payment.dateDeposit = null;
-              payment.valueDeposit = 0;
-              payment.amount = 0;
-              //calculate interest initial value
-              payment.interest = parseFloat(
-                calInteresValue(loan.rateInterest, loan.amount)
-              );
-              payment.nextDatePayment = nextDatePayment;
-              payment.balanceLoand = loanSaved.amount;
-              payment.statusDeposit = false;
-              payment.idLoan = loanSaved._id;
-              try {
-                let paymentResponse = await paymentService.schedulePayment(
-                  payment
-                );
-                if (paymentResponse) {
-                  try {
-                    let {fullName} = await userService.getUserById(loanSaved.idUser)
-                    if (fullName) {
-                      // Crete model expersesIcomes
-                      let expensesIcomes = createModelExpensesIcomes(
-                        null,
-                        moment(body.dateLoan).format("YYYY-MM-DD"),
-                        0,
-                        loan.amount,
-                        `Prestamo registrado al cliente ${fullName}`,
-                        1,
-                        loanSaved._id.toString()
-                      )
-                      try {
-                        let expensesIcomesResponse = await expensesIcomesService.createExpensesOrIcomes(
-                          expensesIcomes
-                        );
-                        if (expensesIcomesResponse) {
-                          let payload = balanceCapitalService.PayloadForUpdateBalanceCapital(
-                            expensesIcomes.expenses,
-                            consultBalanceCapital
-                          );
-                          try {
-                            let upatateBalanceCapitalService = balanceCapitalService.updateCapital(
-                              payload,
-                              consultBalanceCapital[0]._id
-                            );
-                            if (upatateBalanceCapitalService) {
-                              res.status(200).send({
-                                status: "Ok",
-                                loanSaved,
-                              });
-                            }
-                          } catch (error) {
-                            console.log("Error updating Capital ---> ", error);
-                          }
-                        }
-                      } catch (error) {
-                        console.log("Error creating expensesIcomesResponse ---> ", error);
-                      }
-                    }
-                  } catch (error) {
-                    console.log("Error consult getUserById ---> ", error);
-                  }
-                }
-              } catch (error) {
-                console.log("Error paymentResponse save ---> ", error);
-              }
-            }
-          }
-        });
-      } else {
-        res.status(200).send({
-          status: "false",
-          message: "El monto ingresado supera el capital",
-        });
-      }
-    }
-  } catch (error) {
-    console.log("Error loan save ---> ", error);
-  }
-};
-
-const listLoan = (req, res) => {
-  loanLogger.info({
-    message: "Inicio de funcionabilidad para listar prestamos",
-  });
-  Loan.find({})
-    .populate({ path: "idUser" })
-    .exec((error, loans) => {
+  let validateBalanceForLoanResponse = validateBalanceForLoan(loan.amount)
+  if (validateBalanceForLoanResponse) {
+    loan.save(async (error, loanSaved) => {
       if (error) {
         res.status(500).send({
           status: "false",
-          message: "La consulta a la base de datos no devolvio resultados",
+          message: "Ha ocurrido un error al tratar de registrar la solicitud"
         });
       } else {
-        if (!loans) {
+        if (!loanSaved) {
           res.status(400).send({
             status: "false",
-            message: "Error al tratar de procesar la solicitud",
+            message: "Error al tratar de procesar la solicitud"
           });
-        } else {
-          loanLogger.info({
-            message: "lista prestamos Realizada de manera exitosa",
-          });
-          /*if (loans.finishedDatePayment == 'null') {
-          loans.finishedDatePayment = 'Pendiente'
-        }*/
-          loans.map(function (dato) {
-            if (
-              dato.finishedDatePayment == "null" ||
-              dato.finishedDatePayment == null ||
-              dato.finishedDatePayment == 0
-            ) {
-              dato.finishedDatePayment = "Pendiente";
+        }
+        loanLogger.info({
+          message: "Prestamo creado en la base de datos",
+          loanSave: loanSaved
+        });
+        payment = new Payment();
+        payment.dateDeposit = null;
+        payment.valueDeposit = 0;
+        payment.amount = 0;
+        //Calcular el valor del interes inicial
+        payment.interest = parseFloat(calInteresValue(loan.rateInterest, loan.amount));
+        payment.nextDatePayment = nextDatePayment;
+        payment.balanceLoand = loanSaved.amount;
+        payment.statusDeposit = false;
+        payment.idLoan = loanSaved._id;
+        loanLogger.info({
+          message: "Funcionabilidad ",
+          modelCreate: payment
+        });
+        try {
+          let paymentResponse = await paymentService.initialCreatedPayment(payment)
+          if (paymentResponse) {
+            // Crete model expersesIcomes
+            expensesIcomes = createModelExpensesIcomes(null, moment(body.dateLoan).format("YYYY-MM-DD"), 0, loan.amount, "Prestamo a...user ", 1, loanSaved._id.toString())
+            try {
+              let expensesIcomesResponse = await expensesIcomesService.createExpensesOrIcomes(expensesIcomes)
+              if (expensesIcomesResponse) {
+                try {
+                  let consultBalanceCapitalServiceResponse = await balanceCapitalService.consultBalanceCapital();
+                  if (consultBalanceCapitalServiceResponse) {
+                    let payload = balanceCapitalService.validateOutput(expensesIcomes.expenses, consultBalanceCapitalServiceResponse)
+                    /*if (payload.noCapital == 0) {
+                      try {
+                        rollbackLoan(loanSaved._id, function (data, error) {
+                          if (data) {
+                            res.status(200).send({
+                              status: "false",
+                              message: 'El monto ingresado supera el capital'
+                            });
+                          }
+                          if (error) {
+                            console.log(error)
+                          }
+                        })
+                      } catch (error) {
+                        consola(error)
+                      }
+                    }
+  
+                    else {
+                      //Hacer rolback de expensesIcomesResponse - paymentResponse loan
+                      let balanceCapitalUpdateResponse = await balanceCapitalService.updateCapital(payload, consultBalanceCapitalServiceResponse[0]._id)
+                      if (balanceCapitalUpdateResponse) {
+                        res.status(200).send({
+                          status: "Ok",
+                          loanSaved
+                        });
+                      }
+                    }*/
+                    if (payload) {
+                      res.status(200).send({
+                        status: "Ok",
+                        loanSaved
+                      });
+                    }
+                  }
+                } catch (error) {
+                  consola(error)
+                }
+              }
+            } catch (error) {
+              consola(error)
             }
-            return dato;
-          });
-
-          //res.status(200).send(messages("OK", loans));
-          res.status(200).send({ data: loans });
+          }
+        } catch (error) {
+          console.log('Error paymentResponse -----> ', error)
         }
       }
     });
+  }res.status(200).send({
+    status: "false",
+    message: 'El monto ingresado supera el capital'
+  });
+
+} 
+
+
+
+
+
+const listLoan = (req, res) => {
+  loanLogger.info({
+    message: "Inicio de funcionabilidad para listar prestamos"
+  });
+  Loan.find({}).populate({ path: 'idUser' }).exec((error, loans) => {
+    if (error) {
+      res.status(500).send({
+        status: "false",
+        message: "La consulta a la base de datos no devolvio resultados"
+      });
+    } else {
+      if (!loans) {
+        res.status(400).send({
+          status: "false",
+          message: "Error al tratar de procesar la solicitud"
+        });
+      } else {
+        loanLogger.info({
+          message: "lista prestamos Realizada de manera exitosa"
+        });
+        /*if (loans.finishedDatePayment == 'null') {
+          loans.finishedDatePayment = 'Pendiente'
+        }*/
+        loans.map(function (dato) {
+          if (dato.finishedDatePayment == "null" || dato.finishedDatePayment == null || dato.finishedDatePayment == 0) {
+            dato.finishedDatePayment = 'Pendiente';
+
+          }
+          return dato;
+        });
+
+        //res.status(200).send(messages("OK", loans));
+        res.status(200).send({ data: loans });
+      }
+    }
+  });
 };
 
 const loanById = (req, res) => {
   loanLogger.info({
-    message: "Inicio de funcionabilidad para listar prestamo por ID",
+    message: "Inicio de funcionabilidad para listar prestamo por ID"
   });
-  Loan.findById({ _id: req.params.id })
-    .populate({ path: "idUser" })
-    .exec((error, loan) => {
-      if (error) {
-        res.status(500).send({
+  Loan.findById({ _id: req.params.id }).populate({ path: 'idUser' }).exec((error, loan) => {
+    if (error) {
+      res.status(500).send({
+        status: "false",
+        message: "La consulta a la base de datos no devolvio resultados"
+      });
+    } else {
+      if (!loan) {
+        res.status(400).send({
           status: "false",
-          message: "La consulta a la base de datos no devolvio resultados",
+          message: "Error al tratar de procesar la solicitud"
         });
       } else {
-        if (!loan) {
-          res.status(400).send({
-            status: "false",
-            message: "Error al tratar de procesar la solicitud",
-          });
-        } else {
-          loanLogger.info({
-            message: "listar prestamo por ID realizado exitosamente",
-          });
+        loanLogger.info({
+          message: "listar prestamo por ID realizado exitosamente"
+        });
 
-          res.status(200).send(messages("OK", loan));
-        }
+        res.status(200).send(messages("OK", loan));
       }
-    });
+    }
+  });
 };
 
 const loanUpdateById = (req, res) => {
   loanLogger.info({
-    message: "Inicio de funcionabilidad para actualizar un prestamo",
+    message: "Inicio de funcionabilidad para actualizar un prestamo"
   });
   let body = req.body;
   body.dateLoan = moment(body.dateLoan).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
-  nextDatePayment = moment().add(1, "month").format("YYYY-MM-DD");
+  nextDatePayment = moment()
+    .add(1, "month")
+    .format("YYYY-MM-DD");
   //consola(nextDatePayment);
   body.amount = parseFloat(body.amount);
   //body.valueIntertest = parseFloat(body.valueIntertest);
 
   loanLogger.info({
     message: "Modelo creado exitosamente para actualizar prestamo",
-    modelCreate: body,
+    modelCreate: body
   });
 
   Loan.findByIdAndUpdate(req.params.id, body, (error, loadUpdate) => {
     if (error) {
       res.status(500).send({
         status: "false",
-        message: "La consulta a la base de datos no devolvio resultados",
+        message: "La consulta a la base de datos no devolvio resultados"
       });
     } else {
       if (!loadUpdate) {
         res.status(400).send({
           status: "false",
-          message: "Error al tratar de procesar la solicitud",
+          message: "Error al tratar de procesar la solicitud"
         });
       } else {
         loanLogger.info({
-          message: "Prestamo actualizado exitosamente",
+          message: "Prestamo actualizado exitosamente"
         });
         res.status(200).send(messages("OK", loadUpdate));
       }
