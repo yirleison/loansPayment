@@ -35,7 +35,8 @@ const loanByIdUser  = async (id) => {
             reject(false);
         } else {
           if (!loan) {
-            reject(false);
+            //console.log('-----------loanByIdUser',loan)
+           return reject(false);
           } else {
             resolve(loan)
           }

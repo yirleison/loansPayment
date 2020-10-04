@@ -181,7 +181,6 @@ const paymentByIdUser = async (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
-
   try {
     let loanResponse = await loanServices.loanByIdUser(req.params.id);
     if(loanResponse){
@@ -191,7 +190,7 @@ const paymentByIdUser = async (req, res) => {
       }
     }
   } catch (error) {
-    
+    res.status(200).send(messages('false', 'No se encotraron datos para esta solicitud'))
   }
  
 };
