@@ -7,6 +7,7 @@ const Loan = Schema ({
     rateInterest: Number,
     statusLoan: Boolean,
     finishedDatePayment: String,
+    description: String,
     idUser: {type: Schema.ObjectId, ref: 'User'},
 });
 

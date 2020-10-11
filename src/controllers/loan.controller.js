@@ -15,12 +15,14 @@ const { error, log } = require("winston");
 const {
   validateBalanceForLoan,
 } = require("../services/balanceCapital.service");
+const logger = require("../../logger");
 const consola = console.log;
 let expensesIcomes;
 
 const createLoand = async (req, res) => {
-  const loan = new Loan();
+const loan = new Loan();
   let body = req.body;
+  console.log('Body -----> ',body)
   body.dateLoan = moment(new Date()).format("YYYY-MM-DD");
   let dateLoan = body.dateLoan;
   let nextDatePayment = dateLoan;
@@ -35,10 +37,12 @@ const createLoand = async (req, res) => {
   loan.statusLoan = false;
   loan.finishedDatePayment = body.finishedDatePayment;
   loan.idUser = body.idUser;
+  loan.description = body.description
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
   try {
     let consultBalanceCapital = await balanceCapitalService.consultBalanceCapital();
+
     if (consultBalanceCapital) {
       if (validateBalanceForLoan(loan.amount, consultBalanceCapital)) {
         //Create loan
@@ -56,6 +60,7 @@ const createLoand = async (req, res) => {
                 message: "Error al tratar de procesar la solicitud",
               });
             } else {
+              console.log(loanSaved)
               loanLogger.info({
                 message: "Prestamo creado en la base de datos",
                 loanSave: loanSaved,
@@ -79,7 +84,7 @@ const createLoand = async (req, res) => {
                 );
                 if (paymentResponse) {
                   try {
-                    let {fullName} = await userService.getUserById(loanSaved.idUser)
+                    let { fullName } = await userService.getUserById(loanSaved.idUser)
                     if (fullName) {
                       // Crete model expersesIcomes
                       let expensesIcomes = createModelExpensesIcomes(
@@ -321,59 +326,6 @@ const loanByIdUser = (req, res) => {
       }
     });
 };
-
-/*const rollbackLoan = (id, callback) => {
-  let flag = false;
-  console.log('rollbackLoan ------> rollbackLoan')
-  Loan.findByIdAndRemove({ _id: id }, (error, loanRemove) => {
-    if (error) {
-      return callback(null, error)
-    }
-    else {
-      if (!loanRemove) {
-        return callback(null, error)
-      }
-      console.log('loanRemove ------> ', loanRemove)
-      Payment.deleteOne({ idLoan: loanRemove._id }, (error, paymentRemove) => {
-        if (error) {
-          console.log('paymentRemoveerror ------> ', error)
-          return callback(null, error)
-        }
-        else {
-          if (!paymentRemove) {
-            return callback(null, error)
-          }
-          console.log('paymentRemove ------> ', paymentRemove)
-          ExpensesIcomes.find({}, (error, expensesIcomesResult) => {
-            if (error) {
-              return callback(null, error)
-            }
-            else {
-              if (!expensesIcomesResult) {
-                return callback(null, error)
-              }
-
-              let dataexpensesIcome = expensesIcomesResult.filter(x => x.id == loanRemove._id.toString());
-              console.log('dataexpensesIcome--------> ', dataexpensesIcome)
-              ExpensesIcomes.findByIdAndRemove({ _id: dataexpensesIcome[0]._id }, (error, expensesIcomesRemove) => {
-                if (error) {
-                  return callback(null, error)
-                }
-                else {
-                  if (!expensesIcomesRemove) {
-                    return callback(null, error)
-                  }
-                  return callback(true)
-                }
-              })
-            }
-          })
-        }
-      })
-    }
-  })
-
-}*/
 
 const calInteresValue = (interes, amount) => (amount * interes) / 100;
 const createModelExpensesIcomes = (

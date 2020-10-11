@@ -142,7 +142,7 @@ const paymentByIdLoan = async (req, res) => {
         paymentLogger.info({
           message: "listar pago por ID realizado exitosamente"
         });
-        console.log('pago', payment)
+        //console.log('pago', payment)
         //Consulto el interes pendiente
         let dataInterestPending;
         let consulInterestPendingByIdPayment
@@ -178,22 +178,30 @@ const paymentByIdLoan = async (req, res) => {
 };
 
 const paymentByIdUser = async (req, res) => {
+  var t = []
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
   try {
     let loanResponse = await loanServices.loanByIdUser(req.params.id);
     if(loanResponse){
-      let paymentByIdLoan = await paymentServices.paymentByIdLoan(loanResponse._id)
-      if(paymentByIdLoan){
-        res.status(200).send(messages('OK', paymentByIdLoan))
+      let paymentByIdLoan
+      for (let i = 0; i < loanResponse.length; i++) {
+        paymentByIdLoan = await paymentServices.paymentByIdLoan(loanResponse[i]._id)
+        t.push(addNewData(paymentByIdLoan))
       }
+      res.status(200).send(messages('OK',t))
     }
   } catch (error) {
     res.status(200).send(messages('false', 'No se encotraron datos para esta solicitud'))
   }
  
 };
+
+addNewData = (data) => {
+let addData = data
+return addData
+}
 
 getPendingInterest = (data, id) => {
   let result = data.find(x => x.idPayment.toString() === id.toString());
@@ -239,7 +247,7 @@ const paymentUpdateById = async (req, res) => {
           if (amount > consultPayment.balanceLoand) {
             aux = (amount - consultPayment.balanceLoand);
             if (aux == consultPayment.interest) {
-              consola("Caso cuando el clidate  paga la totalidad del prestamo", aux);
+              consola("Caso cuando el cliente  paga la totalidad del prestamo", aux);
               //Creo un modelo de pagos para actualizar una cuota de pago existente....
               paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
                 consultPayment.nextDatePayment = null, 0, true, consultPayment.idLoan)
