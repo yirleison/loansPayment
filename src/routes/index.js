@@ -1,6 +1,9 @@
 const express = require('express');
 const app = express();
 
+app.get("/test", (req, res) => {
+    res.status(200).send({test: 'probrando inicio de la aplicacion'})
+})
 
 app.use(require('./payment.route'));
 app.use(require('./loan.route'));
