@@ -22,16 +22,8 @@ let expensesIcomes;
 const createLoand = async (req, res) => {
 const loan = new Loan();
   let body = req.body;
-  console.log('Body -----> ',body)
-  body.dateLoan = moment(new Date()).format("YYYY-MM-DD");
-  let dateLoan = body.dateLoan;
-  let nextDatePayment = dateLoan;
-  nextDatePayment = moment().add(1, "month").format("YYYY-MM-DD");
-
-  loan.dateLoan = dateLoan;
-  let = body.dateLoan;
-  let currentDate = getCurrenDateAndNexPaymentDate(body.dateLoan);
-  loan.dateLoan = currentDate.current_date;
+  let nextDatePayment = moment(new Date(body.dateLoan)).add(1, "month").format("YYYY-MM-DD");
+  loan.dateLoan = body.dateLoan
   loan.amount = parseFloat(body.amount);
   loan.rateInterest = body.rateInterest;
   loan.statusLoan = false;
@@ -40,7 +32,7 @@ const loan = new Loan();
   loan.description = body.description
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
-  try {
+ try {
     let consultBalanceCapital = await balanceCapitalService.consultBalanceCapital();
 
     if (consultBalanceCapital) {
