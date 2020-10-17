@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const Loan = Schema ({
     dateLoan: Date,
     amount: Number,
-    rateInterest: Number,
+    rateInterest: String,
     statusLoan: Boolean,
     finishedDatePayment: String,
     description: String,

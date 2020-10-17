@@ -63,13 +63,12 @@ const loan = new Loan();
               payment.valueDeposit = 0;
               payment.amount = 0;
               //calculate interest initial value
-              payment.interest = parseFloat(
-                calInteresValue(loan.rateInterest, loan.amount)
-              );
+              payment.interest =  calInteresValue(parseFloat(loan.rateInterest), loan.amount)
               payment.nextDatePayment = nextDatePayment;
               payment.balanceLoand = loanSaved.amount;
               payment.statusDeposit = false;
               payment.idLoan = loanSaved._id;
+              consola('modelo pago ------> ',payment)
               try {
                 let paymentResponse = await paymentService.schedulePayment(
                   payment
@@ -319,7 +318,7 @@ const loanByIdUser = (req, res) => {
     });
 };
 
-const calInteresValue = (interes, amount) => (amount * interes) / 100;
+const calInteresValue = (interes, amount) => ((amount * interes) / 100) ;
 const createModelExpensesIcomes = (
   dateIncome,
   dateExpense,

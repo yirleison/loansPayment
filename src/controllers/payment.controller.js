@@ -509,8 +509,8 @@ const paymentUpdateById = async (req, res) => {
 };
 
 const deletePayment = (req, res) => {
-  console.log(req.params)
-  Payment.findOneAndRemove(req.params.id, (error, paymentRemove) => {
+  console.log('ID a eliminar --- >',req.params)
+  Payment.findByIdAndDelete(req.params.id, (error, paymentRemove) => {
     if (error) {
       res.status(500).send({
         status: "false",
