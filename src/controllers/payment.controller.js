@@ -180,27 +180,59 @@ const paymentByIdLoan = async (req, res) => {
 const paymentByIdUser = async (req, res) => {
   var t = []
   paymentLogger.info({
-    message: "Inicio de funcionabilidad para listar pago por ID"
+    message: "Inicio de funcionabilidad para listar pago por ID del usuario"
   });
   try {
     let loanResponse = await loanServices.loanByIdUser(req.params.id);
-    if(loanResponse){
-      let paymentByIdLoan
-      for (let i = 0; i < loanResponse.length; i++) {
-        paymentByIdLoan = await paymentServices.paymentByIdLoan(loanResponse[i]._id)
-        t.push(addNewData(paymentByIdLoan))
+    if (loanResponse) {
+      if (loanResponse.length == 1) {
+        consola('entro ------> ', loanResponse[0]._id)
+        Payment.find({ idLoan: loanResponse[0]._id }, (error, payments) => {
+          if (error) {
+            consola(error)
+          } else {
+            if (!payment) {
+              res.status(200).send(messages('false', 'No se encontraron registros para esta consulta.'))
+            } else {
+              res.status(200).send(messages('OK', payments))
+            }
+          }
+        });
       }
-      res.status(200).send(messages('OK',t))
+      else {
+        let paymentByIdLoan
+        var newData = []
+        for (let i = 0; i < loanResponse.length; i++) {
+          paymentByIdLoan = await paymentServices.paymentByIdLoan(loanResponse[i]._id)
+          t.push(addNewData(paymentByIdLoan))
+        }
+        t.map((x) => {
+          return b = x.map((c) => {
+            newData.push({
+              _id: c._id,
+              dateDeposit: c.dateDeposit,
+              amount: c.amount,
+              interest: c.interest,
+              nextDatePayment: c.nextDatePayment,
+              balanceLoand: c.balanceLoand,
+              statusDeposit: c.statusDeposit,
+              idLoan: c.idLoan,
+            })
+          })
+        })
+        res.status(200).send(messages('OK', newData))
+      }
     }
+    // consola('Pagos por ID usuario --------------> ', t)
   } catch (error) {
     res.status(200).send(messages('false', 'No se encotraron datos para esta solicitud'))
   }
- 
+
 };
 
 addNewData = (data) => {
-let addData = data
-return addData
+  let addData = data
+  return addData
 }
 
 getPendingInterest = (data, id) => {
@@ -509,7 +541,7 @@ const paymentUpdateById = async (req, res) => {
 };
 
 const deletePayment = (req, res) => {
-  console.log('ID a eliminar --- >',req.params)
+  console.log('ID a eliminar --- >', req.params)
   Payment.findByIdAndDelete(req.params.id, (error, paymentRemove) => {
     if (error) {
       res.status(500).send({

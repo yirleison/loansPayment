@@ -31,7 +31,6 @@ const loanByIdUser = async (id) => {
   loanLogger.info({
     message: "Inicio de funcionabilidad para el servicio listar prestamo por ID"
   });
-
   return new Promise((resolve, reject) => {
     let y
     Loan.find({ idUser: idUser }, (error, loans) => {

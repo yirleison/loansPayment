@@ -54,7 +54,7 @@ const paymentByIdLoan = async (id) => {
     message: "Inicio de funcionabilidad para el servicio listar pago por ID",
   });
   return new Promise((resolve, reject) => {
-    Payment.findOne({ idLoan: id },(error, payment) => {
+    Payment.find({ idLoan: id },(error, payment) => {
       if (error) {
         reject(false);
       } else {
