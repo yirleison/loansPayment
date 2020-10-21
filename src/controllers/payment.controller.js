@@ -208,7 +208,7 @@ const paymentByIdUser = async (req, res) => {
         }
         t.map((x) => {
           return b = x.map((c) => {
-            newData.push({
+            newData_.push({
               _id: c._id,
               dateDeposit: c.dateDeposit,
               amount: c.amount,
@@ -262,13 +262,14 @@ const paymentUpdateById = async (req, res) => {
   const idPayment = req.params.id;
   const typePayment = req.headers.typepayment;
   //Valido el tipo de pago si es 1 es porque se va pagar una cuota, si es 2 es porque se va actualizar una cuota existente..
-  switch (typePayment) {
+   switch (typePayment) {
     case "1":
       consola("Entro a la funcioanalidad para realizar un pago de una cuota existente");
       consola(payload)
       try {
         let consultPayment = await paymentServices.paymentById(idPayment);
         let consultLoan = await loanServices.loanById(consultPayment.idLoan);
+        let { fullName } = consultLoan.idUser
         //Consulto el interes pendiente
         // console.log('Consulta interes pendiente', await consultInteresPending(consultPayment))
         //Pendiente consultar en la colección iterestPending si el cliente tiene intereses en mora relacionados a el id de la cuota
@@ -281,12 +282,12 @@ const paymentUpdateById = async (req, res) => {
             if (aux == consultPayment.interest) {
               consola("Caso cuando el cliente  paga la totalidad del prestamo", aux);
               //Creo un modelo de pagos para actualizar una cuota de pago existente....
-              paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
+              paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
                 consultPayment.nextDatePayment = null, 0, true, consultPayment.idLoan)
               try {
                 paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
                 if (paymentUpdate) {
-                  consultLoan.finishedDatePayment = moment().format("YYYY-MM-DD");
+                  consultLoan.finishedDatePayment = moment(payload.dateDeposit).format("YYYY-MM-DD");
                   consultLoan.statusLoan = true;
                   let modelUpdateLoan = createModelLoan(consultLoan.dateLoan, consultLoan.amount, consultLoan.rateInterest,
                     consultLoan.statusLoan, consultLoan.finishedDatePayment, consultLoan.idUser);
@@ -294,7 +295,7 @@ const paymentUpdateById = async (req, res) => {
                   let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
                   if (loanUpdate) {
                     //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
+                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
                       if (data) {
                         //res.status(200).send(messages("OK", paymentService));
@@ -317,28 +318,22 @@ const paymentUpdateById = async (req, res) => {
           if (amount == consultPayment.balanceLoand) {
             consola("Caso cuando el cliente realiza un pago y el monto ingresado es == al valor del prestamo", amount);
             //Actualizo la cuota de pago existente y creo una nueva cuota de pago....
-            paymentService = createModelPayment(moment().format("YYYY-MM-DD"), payload.amount, consultPayment.interest,
+            paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), payload.amount, consultPayment.interest,
               consultPayment.nextDatePayment, (consultPayment.balanceLoand - consultPayment.interest), true, consultPayment.idLoan)
             paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
             if (paymentUpdate) {
-              paymentService = createModelPayment(null, 0, calInteresValue(consultLoan.rateInterest, (consultPayment.balanceLoand - consultPayment.interest)),
-                moment(consultPayment.nextDatePayment).add(1, "month")
-                  .format("YYYY-MM-DD"), (consultPayment.balanceLoand - consultPayment.interest), false, consultPayment.idLoan);
               try {
-                let createPayment = await paymentServices.createPayment(paymentService);
-                if (createPayment) {
-                  //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
-                  createIcome(modelIcomeExpense, 0, 0, 0, 0, 1, (consultPayment.balanceLoand - consultPayment.interest), (consultPayment.interest), function (data, error) {
-                    if (data) {
-                      //Pendiente manejar el error... 
-                      res.status(200).send(messages("OK", paymentService));
-                    }
-                    else {
-                      res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
-                    }
-                  });
-                }
+                //Creo un modelo para crear una entrada de dinero y actualizo el capital
+                modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+                createIcome(modelIcomeExpense, 0, 0, 0, 0, 1, (consultPayment.balanceLoand - consultPayment.interest), (consultPayment.interest), function (data, error) {
+                  if (data) {
+                    //Pendiente manejar el error... 
+                    res.status(200).send(messages("OK", paymentService));
+                  }
+                  else {
+                    res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
+                  }
+                });
               } catch (error) {
                 consola(error)
                 res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
@@ -354,19 +349,13 @@ const paymentUpdateById = async (req, res) => {
               aux = (amount - consultPayment.interest);
               if (consultPayment.balanceLoand > aux) {
                 consola('El restande del monto - interes es menor que el balance', aux);
-                paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
+                paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
                   consultPayment.nextDatePayment, parseFloat((consultPayment.balanceLoand - aux)), true, consultPayment.idLoan)
               }
               paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
               if (paymentUpdate) {
-                paymentService = createModelPayment(null, 0, parseFloat(calInteresValue(consultLoan.rateInterest, paymentUpdate.balanceLoand)),
-                  moment(paymentUpdate.nextDatePayment).add(1, "month")
-                    .format("YYYY-MM-DD"), paymentUpdate.balanceLoand, false, paymentUpdate.idLoan);
-                consola(paymentService)
                 try {
-                  let createPayment = await paymentServices.createPayment(paymentService);
-                  if (createPayment) {
-                    modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
+                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 0, 1, 0, 0, 0, (consultPayment.balanceLoand - aux), consultPayment.interest, function (data, error) {
                       if (data) {
                         //Pendiente manejar el error...
@@ -376,7 +365,6 @@ const paymentUpdateById = async (req, res) => {
                         res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
                       }
                     });
-                  }
                 } catch (error) {
                   consola(error)
                 }
@@ -393,22 +381,16 @@ const paymentUpdateById = async (req, res) => {
 
             try {
               //Actualizo la cuota de pago existente y creo una nueva cuota de pago....
-              paymentService = createModelPayment(moment().format("YYYY-MM-DD"), payload.amount, amount,
+              paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), payload.amount, amount,
                 consultPayment.nextDatePayment, consultPayment.balanceLoand, true, consultPayment.idLoan);
               paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
               if (paymentUpdate) {
-                paymentService = createModelPayment(null, 0, consultPayment.interest,
-                  moment(consultPayment.nextDatePayment).add(1, "month")
-                    .format("YYYY-MM-DD"), consultPayment.balanceLoand, false, consultPayment.idLoan);
-                try {
-                  let createPayment = await paymentServices.createPayment(paymentService);
-
-                  if (createPayment) {
+                try {                 
                     //Creo un nuevo interest de mora
-                    modelInterest = createModelInterestPending(moment().format("YYYY-MM-DD"), (consultPayment.interest - amount), false, createPayment._id)
+                    modelInterest = createModelInterestPending(moment(payload.dateDeposit).format("YYYY-MM-DD"), (consultPayment.interest - amount), false, consultPayment._id)
                     if (await interestServices.createInteresPending(modelInterest)) {
                       //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                      modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
+                      modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
                     }
                     createIcome(modelIcomeExpense, 0, 0, 1, 0, 0, 0, 0, function (data, error) {
                       if (data) {
@@ -419,7 +401,6 @@ const paymentUpdateById = async (req, res) => {
                         console.log(error)
                       }
                     });
-                  }
                 } catch (error) {
                   consola(error)
                   res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
@@ -435,18 +416,13 @@ const paymentUpdateById = async (req, res) => {
           if (amount == consultPayment.interest) {
             consola("Caso cuando el cliente realiza un pago y el monto ingresado es == al interes de la cuota programda", amount);
             //Actualizo la cuota de pago existente y creo una nueva cuota de pago....
-            paymentService = createModelPayment(moment().format("YYYY-MM-DD"), payload.amount, amount,
+            paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), payload.amount, amount,
               consultPayment.nextDatePayment, consultPayment.balanceLoand, true, consultPayment.idLoan)
             paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
-            if (paymentUpdate) {
-              paymentService = createModelPayment(null, 0, consultPayment.interest,
-                moment(consultPayment.nextDatePayment).add(1, "month")
-                  .format("YYYY-MM-DD"), consultPayment.balanceLoand, false, consultPayment.idLoan);
+            if (paymentUpdate) {             
               try {
-                let createPayment = await paymentServices.createPayment(paymentService);
-                if (createPayment) {
                   //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                  modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + consultLoan._id, 3, consultLoan._id.toString());
+                  modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
                   createIcome(modelIcomeExpense, 0, 0, 0, 1, 0, 0, consultPayment.interest, function (data, error) {
                     if (data) {
                       //Pensiente manejar el error...
@@ -456,7 +432,6 @@ const paymentUpdateById = async (req, res) => {
                       res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
                     }
                   });
-                }
               } catch (error) {
                 consola(error)
                 res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
@@ -476,7 +451,6 @@ const paymentUpdateById = async (req, res) => {
     case "0":
       consola("Entro a la funcionabilidad para actualizar un pago");
       try {
-
         payload.statusDeposit = (payload.statusDeposit == '1' || payload.statusDeposit == 1 ? false : true);
         //consola(payload)
         let dateDeposit = payload.dateDeposit
@@ -503,12 +477,12 @@ const paymentUpdateById = async (req, res) => {
       amount = payload.amount;
       aux = (amount - consultPayment.balanceLoand);
       //Creo un modelo de pagos para actualizar una cuota de pago existente....
-      paymentService = createModelPayment(moment().format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
+      paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
         consultPayment.nextDatePayment = null, 0, true, consultPayment.idLoan._id)
       try {
         paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
         if (paymentUpdate) {
-          consultLoan.finishedDatePayment = moment().format("YYYY-MM-DD");
+          consultLoan.finishedDatePayment = moment(payload.dateDeposit).format("YYYY-MM-DD");
           consultLoan.statusLoan = true;
           let modelUpdateLoan = createModelLoan(consultLoan.dateLoan, consultLoan.amount, consultLoan.rateInterest,
             consultLoan.statusLoan, consultLoan.finishedDatePayment, consultLoan.idUser);
@@ -516,7 +490,7 @@ const paymentUpdateById = async (req, res) => {
           let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
           if (loanUpdate) {
             //Creo un modelo para crear una entrada de dinero y actualizo el capital
-            modelIcomeExpense = createModelIcomeExpense(moment().format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+            modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
             createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
               if (data) {
                 //res.status(200).send(messages("OK", paymentService));
