@@ -20,6 +20,36 @@ const createExpensesOrIcomes = async (payload) => {
   })
 }
 
+const deleteExpensesOrIcomes = async (id) => {
+  return new Promise((resolve, reject) => {
+    ExpensesIcomes.findByIdAndDelete({_id : id}, (error, expensesIcomesRemove) => {
+      if (error) {
+        return reject(error)
+      } else {
+        if (!expensesIcomesRemove) {
+          return reject(error)
+        }
+        return resolve(expensesIcomesRemove)
+      }
+    })
+  })
+}
+
+const consultExpensesOrIcomes = async (id) => {
+  return new Promise((resolve, reject) => {
+    ExpensesIcomes.find({id : id}, (error, expensesIcomes) => {
+      if (error) {
+        return reject(error)
+      } else {
+        if (!expensesIcomes) {
+          return reject(error)
+        }
+        return resolve(expensesIcomes)
+      }
+    })
+  })
+}
+
 const createIcome = (body) => {
   balanceInteres = new ExpensesIcomes();
   balanceInteres.dateIncome = moment(body.dateIncome).format("YYYY-MM-DD");
@@ -130,5 +160,7 @@ module.exports = {
   consultBalanceCapital,
   createCapital,
   updateCapital,
-  createIcome
+  createIcome,
+  deleteExpensesOrIcomes,
+  consultExpensesOrIcomes
 }

@@ -9,6 +9,8 @@ const interestServices = require('../services/interest.service');
 const expensesIcomesService = require('../services/expensesIcomes.service');
 const balanceCapitalService = require('../services/balanceCapital.service');
 const moment = require("moment");
+const interestService = require("../services/interest.service");
+const paymentService = require("../services/payment.service");
 
 let modelIcomeExpense;
 let balanceCapital
@@ -172,6 +174,20 @@ const interestUpdateById = async (req, res) => {
     interestLogger.info({
         message: "Inicio de funcionabilidad para actualizar un Interest"
     });
+
+    let nameUser
+    
+    try {
+        let consultPayment = await paymentService.paymentById(payload.idPayment)
+        if(consultPayment){
+            let { fullName } = consultPayment.idLoan.idUser
+            nameUser = fullName
+        }
+        
+    } catch (errorConsultPayment) {
+        console.log('Error tratando de consultar el nombre del usuario por medio del pago ---> ', errorConsultPayment)
+    }
+    
     Interest.findByIdAndUpdate(req.params.id, req.body, { new: true }, async (error, interestUpdate) => {
         if (error) {
             res.status(500).send({
@@ -188,17 +204,26 @@ const interestUpdateById = async (req, res) => {
                 interestLogger.info({
                     message: "Interest actualizado exitosamente"
                 });
-                if (!interestUpdate.status) {
-                    try {
-                          balanceCapital = await expensesIcomesService.consultBalanceCapital();
-                        balanceCapital = balanceCapital[0];                      
+                try {
+                    balanceCapital = await expensesIcomesService.consultBalanceCapital();
+                    balanceCapital = balanceCapital[0];             
+                } catch (errorBalanceCapital) {
+                    console.log('Error tratando de consultar el balance capital ----> ', errorBalanceCapital)
+                }
+
+                if (interestUpdate.state) {
+                    try {                       
                         if (balanceCapital) {                          
-                            modelIcomeExpense = createModelIcomeExpense(moment(payload.dayPayment).format("YYYY-MM-DD"), null, payload.interestPending, 0, 'Recaudos de Intereses pendientes', 3, interestUpdate._id.toString());
+                            modelIcomeExpense = createModelIcomeExpense(moment(payload.dayPayment).format("YYYY-MM-DD"), null, payload.interestPending, 0, `Recaudos de Intereses pendientes del cliente ${nameUser}`, 3, interestUpdate._id.toString());
                             let expensesIcomesServiceResponse = await expensesIcomesService.createExpensesOrIcomes(modelIcomeExpense);
                             if (expensesIcomesServiceResponse) {
+                                let sumBalanceInterest = 0
+                                let amoutRequest = parseFloat(payload.interestPending )
+                                let amoutUpdate = parseFloat(balanceCapital.balanceInterest)
+                                sumBalanceInterest = amoutUpdate + amoutRequest     
                                 let modelCBalanceCapital = {
                                     balanceCapital: balanceCapital.balanceCapital,
-                                    balanceInterest: (balanceCapital.balanceInterest + payload.interestPending),
+                                    balanceInterest: sumBalanceInterest,
                                     balanceCapitalAfter: balanceCapital.balanceCapital,
                                     balanceInterestAfter: balanceCapital.balanceInterest,
                                 }
@@ -223,6 +248,46 @@ const interestUpdateById = async (req, res) => {
                     }
                 }
                 else {
+                    console.log('Eentro funcion para eliminar un expenses icomes y actualizar el balance capital')
+                    try {
+                        //let expensesIcomesDelete = await expensesIcomesService.deleteExpensesOrIcomes(payload.idPayment.toString())
+                        let interestPending = await interestService.consulInterestPendingByIdPayment(payload.idPayment)
+                        if(interestPending){
+                           try {
+                            let consulExpenesIcomes = await expensesIcomesService.consultExpensesOrIcomes(interestPending[0]._id)
+                            if(consulExpenesIcomes){
+                                try {
+                                    let expensesIcomesDelete = await expensesIcomesService.deleteExpensesOrIcomes(consulExpenesIcomes[0]._id)
+                                    if(expensesIcomesDelete){
+                                        try {
+                                            let modelCBalanceCapital = {
+                                                balanceCapital: balanceCapital.balanceCapital,
+                                                balanceInterest: balanceCapital.balanceInterest - interestPending[0].interestPending,
+                                                balanceCapitalAfter: balanceCapital.balanceCapital,
+                                                balanceInterestAfter:balanceCapital.balanceInterest - interestPending[0].interestPending,
+                                            }
+                                            let updateBalanceCapital = await balanceCapitalService.updateCapital(modelCBalanceCapital,balanceCapital._id);
+                                            if(updateBalanceCapital){
+                                                res.status(200).send(messages("OK", interestUpdate));
+                                            }
+                                            
+                                        } catch (errorUpdateBalanceCapital) {
+                                            console.log('Error tratando de actualizar el balance capital ---->', errorUpdateBalanceCapital)
+                                        }
+                                    }
+                                } catch (errorExpensesIcomes) {
+                                    console.log('Error tratando eliminar el expensesIcomes ---->', errorExpensesIcomes)
+                                }
+                               
+                            }
+                           } catch (errorExpensesIcomes) {
+                            console.log('Error tratando de consultar el expenses icomes ---->', errorExpensesIcomes)
+                           }
+                           
+                        }
+                    } catch (errorInterestPending) {
+                        console.log('Error tratando de consultar el interes pendiente ---->', errorInterestPending)
+                    }
 
                 }
                
