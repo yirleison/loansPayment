@@ -634,10 +634,9 @@ updateInterestPending = async (payload, id) => {
   }
 }
 
-const createModelIcomeExpense = (dateIncome, dateExpense, income, expenses, note, type, id) => {
+const createModelIcomeExpense = (date, dateExpense, income, expenses, note, type, id) => {
   return {
-    dateIncome,
-    dateExpense,
+    date,
     income: Number(parseFloat(income).toFixed(2)),
     expenses: Number(parseFloat(expenses).toFixed(2)),
     type,

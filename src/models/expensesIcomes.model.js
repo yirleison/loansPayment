@@ -3,8 +3,7 @@ const { interestLogger } = require('../../logger');
 const Schema = mongoose.Schema;
 
 const ExpensesIcomesSchema = new Schema({
-    dateIncome: Date,
-    dateExpense: Date,
+    date: Date,
     income: Number,
     expenses: Number,
     note: String,

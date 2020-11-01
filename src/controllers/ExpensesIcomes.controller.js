@@ -5,28 +5,29 @@ const { messages } = require("../utils/messages");
 const moment = require("moment");
 const expensesIcomesService = require('../services/expensesIcomes.service');
 
-const createBalanceInterest = async (req, res) => {
+const createExpeseIncome = async (req, res) => {
     var body = req.body;
-    console.log(body)
-    balanceInteres = new ExpensesIcomes();
-    balanceInteres.dateIncome = moment(body.dateIncome).format("YYYY-MM-DD");
-    balanceInteres.dateExpense = null;
-    balanceInteres.income = Number(parseFloat(body.income));
-    balanceInteres.expenses = Number(parseFloat(body.expenses));
-    balanceInteres.balanceInterest = Number(parseFloat(body.balanceInterest));
-    balanceInteres.note = body.note;
+    //console.log(body)
+    expensesIncomeModel = new ExpensesIcomes();
+    expensesIncomeModel.date = moment(body.dateIncome).format("YYYY-MM-DD");
+    expensesIncomeModel.income = Number(parseFloat(body.income));
+    expensesIncomeModel.expenses = Number(parseFloat(body.expenses));
+    expensesIncomeModel.note = body.note;
+    expensesIncomeModel.type = body.type;
+    expensesIncomeModel.id = body.id;
+    console.log(expensesIncomeModel)
+
     let auxInterest = 0;
     let auxCapital = 0;
     let payload;
 
     try {
         let balanceCapital = await expensesIcomesService.consultBalanceCapital();
-        console.log(balanceCapital[0]._id)
         if (balanceCapital[0].balanceCapital == 0 && balanceCapital[0].balanceInterest == 0 && body.expenses > 0) {
             console.log('No se puede crear una salida de dinero por que no hay saldo en caja')
         }
         else {
-            if (body.expenses) {
+            if (body.type == 1) {
                 if (body.expenses > balanceCapital[0].balanceInterest) {
                     auxInterest = (body.expenses - balanceCapital[0].balanceInterest);
                     if ((auxInterest - balanceCapital[0].balanceCapital)) {
@@ -34,6 +35,8 @@ const createBalanceInterest = async (req, res) => {
                         payload = {
                             balanceCapital: auxCapital,
                             balanceInterest: 0,
+                            balanceCapitalAfter: balanceCapital[0].balanceCapital,
+                            balanceInterestAfter: balanceCapital[0].balanceInterest
                         }
                     }
                 }
@@ -42,12 +45,16 @@ const createBalanceInterest = async (req, res) => {
                     payload = {
                         balanceCapital: balanceCapital[0].balanceCapital,
                         balanceInterest: auxInterest,
+                        balanceCapitalAfter: balanceCapital[0].balanceCapital,
+                        balanceInterestAfter: balanceCapital[0].balanceInterest
                     }
                 }
                 if (body.expenses == balanceCapital[0].balanceInterest) {
                     payload = {
                         balanceCapital: balanceCapital[0].balanceCapital,
                         balanceInterest: 0,
+                        balanceCapitalAfter: balanceCapital[0].balanceCapital,
+                        balanceInterestAfter: balanceCapital[0].balanceInterest
                     }
                 }
                 if (body.expenses > balanceCapital[0].balanceInterest) {
@@ -56,18 +63,38 @@ const createBalanceInterest = async (req, res) => {
                         payload = {
                             balanceCapital: 0,
                             balanceInterest: 0,
+                            balanceCapitalAfter: balanceCapital[0].balanceCapital,
+                            balanceInterestAfter: balanceCapital[0].balanceInterest
                         }
                     }
                 }
             }
-            //Actualizo la colección de balance capital...
-            try {
-                let updateCapital = await expensesIcomesService.updateCapital(payload, balanceCapital[0]._id);
-                console.log(updateCapital);
-            } catch (error) {
-                console.log('error', error);
+            if (body.type == 0) {
+                payload = {
+                    balanceCapital: (balanceCapital[0].balanceCapital + parseFloat(body.income)),
+                    balanceInterest: (balanceCapital[0].balanceInterest),
+                    balanceCapitalAfter: balanceCapital[0].balanceCapital,
+                    balanceInterestAfter: balanceCapital[0].balanceInterest
+                }
             }
-            console.log(auxInterest, auxCapital)
+            try {
+                let expensesIncomes = await expensesIcomesService.createExpensesOrIcomes(expensesIncomeModel)
+                if (expensesIncomes) {
+                    try {
+                        let updateCapital = await expensesIcomesService.updateCapital(payload, balanceCapital[0]._id);
+                        if (updateCapital) {
+                          return  res.status(200).send(messages("OK", updateCapital));
+                            //console.log('Respuesta actulizacion balance capital',updateCapital)
+                        }
+                    } catch (errorUpdateCapital) {
+                        console.log('Error al actualizar el capital', errorUpdateCapital);
+                      return  res.status(200).send(messages("false", 'Ha ocurrido un error interno al tratar de procesar esta solicitud.'));
+                    }
+                }
+            } catch (errorCreateExpensesIncomes) {
+              console.log('Error al creat una entrada o salida de dinero', errorCreateExpensesIncomes);
+              return  res.status(200).send(messages("false", 'Ha ocurrido un error interno al tratar de procesar esta solicitud.'));
+            }
         }
     } catch (error) {
         console.log('error', error);
@@ -75,7 +102,7 @@ const createBalanceInterest = async (req, res) => {
 }
 
 const lastBalanceInterest = (req, res) => {
-    BalanceInterest.find({}).sort({ _id: '-1' }).exec((err, balanceInterest) => {
+    ExpensesIcomes.find({}).sort({ income: '-1' }).exec((err, balanceInterest) => {
         if (err) {
             res.status(500).send({
                 status: "false",
@@ -120,7 +147,7 @@ const listCapital = async (req, res) => {
     try {
         let listCapital = await expensesIcomesService.consultBalanceCapital();
         console.log(listCapital)
-        if(!listCapital) {
+        if (!listCapital) {
             res.status(500).send({
                 status: "false",
                 message: "Ha ocurrido un error al tratar de registrar la solicitud"
@@ -129,13 +156,13 @@ const listCapital = async (req, res) => {
         else {
             res.status(200).send(messages("OK", listCapital));
         }
-        
+
     } catch (error) {
         res.status(500).send({
             status: "false",
             message: "Ha ocurrido un error al tratar de registrar la solicitud"
         });
-         console.log(error)
+        console.log(error)
     }
 }
 
@@ -152,7 +179,7 @@ const createModelBalanceInterest = (dateIncome, dateExpense, income, expenses, b
 }
 
 module.exports = {
-    createBalanceInterest,
+    createExpeseIncome,
     lastBalanceInterest,
     createCapital,
     listCapital

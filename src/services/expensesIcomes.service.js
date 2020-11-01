@@ -135,7 +135,7 @@ const createCapital = (model) => {
 }
 
 const updateCapital = (payload, id) => {
-  return new Promise((reject, resolve) => {
+  return new Promise((resolve, reject ) => {
     BalanceCapital.findByIdAndUpdate(id, payload, { new: true }, (error, capitalUpdate) => {
       if (error) {
         reject(error);

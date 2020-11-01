@@ -322,30 +322,42 @@ const updateInteresById = (req, res) => {
     });
 }
 
-const deleteInterest = (req, res) => {
+const deleteInterest = async (req, res) => {
     interestLogger.info({
         message: "Inicio de funcionabilidad para eliminar un interest por ID"
     });
-    Interest.findByIdAndRemove(_id, (error, interestDelete) => {
-        if (error) {
-            res.status(500).send({
-                status: "false",
-                message: "La consulta a la base de datos no devolvio resultados"
+    // Consultar el interes pendiente --- si el estado es false se puede eliminar de lo contrario no...
+    try {
+        let interestPending = await interestService.consulInterestPendingByIdPayment(req.params.id)
+        console.log('interestPending ---------------> ',interestPending[0])
+        if(interestPending[0].state){
+            res.status(200).send(messages("false", 'No se ha podido eliminar este interes pendiente.'));
+        }else {
+            Interest.findByIdAndRemove(interestPending[0]._id, (error, interestDelete) => {
+                if (error) {
+                    res.status(500).send({
+                        status: "false",
+                        message: "La consulta a la base de datos no devolvio resultados"
+                    });
+                } else {
+                    if (!interestDelete) {
+                        res.status(400).send({
+                            status: "false",
+                            message: "Error al tratar de procesar la solicitud"
+                        });
+                    } else {
+                        console.log('entro ---------------> 2')
+                        interestLogger.info({
+                            message: "interest eliminado exitosamente"
+                        });
+                        res.status(200).send(messages("OK", interestDelete));
+                    }
+                }
             });
-        } else {
-            if (!interestDelete) {
-                res.status(400).send({
-                    status: "false",
-                    message: "Error al tratar de procesar la solicitud"
-                });
-            } else {
-                interestLogger.info({
-                    message: "interest eliminado exitosamente"
-                });
-                res.status(200).send(messages("OK", interestDelete));
-            }
         }
-    });
+    } catch (errorInterestPending) {
+        console.log('Error tratando de consultar el interes pendiente ---->', errorInterestPending)
+    }
 }
 
 const createModelIcomeExpense = (dateIncome, dateExpense, income, expenses, note, type, id) => {
