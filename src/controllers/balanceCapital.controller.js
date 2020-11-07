@@ -1,12 +1,13 @@
 const BalanceCapital = require('../models/balanceCapital.model')
-const { balanceCapilalLogger } = require("../../logger");
+const ExpensesIncomes = require('../models/expensesIcomes.model')
+const { balanceCapilalLogger, balanceInterestLogger } = require("../../logger");
 const balanceCapitalService = require('../services/balanceCapital.service');
 const { messages } = require("../utils/messages");
 
 const createBalanceCapital = (req, res) => {
     let body = req.body
     modelBalanceCapita = new BalanceCapital(body)
-    modelBalanceCapita.save((err,balanceCapitalSave) => {
+    modelBalanceCapita.save((err, balanceCapitalSave) => {
         if (err) {
             res.status(500).send({
                 status: "false",
@@ -52,6 +53,18 @@ const listBalanceCapital = (req, res) => {
         }
     });
 }
+const balanceCapitalInterest = (req, res) => {
+    let data
+    BalanceCapital.findOne({}, function (err, result) {
+        if (err) return console.error(err)
+            res.status(200).send(messages('OK', {
+                totalCpaital: result.balanceCapital,
+                totalInterest: result.balanceInterest,
+                total: (result.balanceCapital + result.balanceInterest)
+            }))
+    })
+}
+
 
 const updateBalanceCapital = (req, res) => {
     BalanceCapital.findByIdAndUpdate(req.params.id, req.body, { new: true }, (error, balanceCapitalUpdate) => {
@@ -80,5 +93,6 @@ const updateBalanceCapital = (req, res) => {
 module.exports = {
     createBalanceCapital,
     listBalanceCapital,
-    updateBalanceCapital
+    updateBalanceCapital,
+    balanceCapitalInterest
 };

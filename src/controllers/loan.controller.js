@@ -20,7 +20,7 @@ const consola = console.log;
 let expensesIcomes;
 
 const createLoand = async (req, res) => {
-const loan = new Loan();
+  const loan = new Loan();
   let body = req.body;
   let nextDatePayment = moment(new Date(body.dateLoan)).add(1, "month").format("YYYY-MM-DD");
   loan.dateLoan = body.dateLoan
@@ -32,7 +32,7 @@ const loan = new Loan();
   loan.description = body.description
   loanLogger.info({ message: "Modelo creado exitosamente", modelCreate: loan });
 
- try {
+  try {
     let consultBalanceCapital = await balanceCapitalService.consultBalanceCapital();
 
     if (consultBalanceCapital) {
@@ -63,12 +63,12 @@ const loan = new Loan();
               payment.valueDeposit = 0;
               payment.amount = 0;
               //calculate interest initial value
-              payment.interest =  calInteresValue(parseFloat(loan.rateInterest), loan.amount)
+              payment.interest = calInteresValue(parseFloat(loan.rateInterest), loan.amount)
               payment.nextDatePayment = nextDatePayment;
               payment.balanceLoand = loanSaved.amount;
               payment.statusDeposit = false;
               payment.idLoan = loanSaved._id;
-              consola('modelo pago ------> ',payment)
+              consola('modelo pago ------> ', payment)
               try {
                 let paymentResponse = await paymentService.schedulePayment(
                   payment
@@ -79,7 +79,6 @@ const loan = new Loan();
                     if (fullName) {
                       // Crete model expersesIcomes
                       let expensesIcomes = createModelExpensesIcomes(
-                        null,
                         moment(body.dateLoan).format("YYYY-MM-DD"),
                         0,
                         loan.amount,
@@ -318,10 +317,9 @@ const loanByIdUser = (req, res) => {
     });
 };
 
-const calInteresValue = (interes, amount) => ((amount * interes) / 100) ;
+const calInteresValue = (interes, amount) => ((amount * interes) / 100);
 const createModelExpensesIcomes = (
-  dateIncome,
-  dateExpense,
+  date,
   income,
   expenses,
   note,
@@ -329,8 +327,7 @@ const createModelExpensesIcomes = (
   id
 ) => {
   return {
-    dateIncome,
-    dateExpense,
+    date,
     income: parseFloat(income),
     expenses: parseFloat(expenses),
     note,

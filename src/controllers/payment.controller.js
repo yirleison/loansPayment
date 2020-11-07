@@ -185,6 +185,7 @@ const paymentByIdUser = async (req, res) => {
   try {
     let loanResponse = await loanServices.loanByIdUser(req.params.id);
     if (loanResponse) {
+      console.log(loanResponse)
       if (loanResponse.length == 1) {
         consola('entro ------> ', loanResponse[0]._id)
         Payment.find({ idLoan: loanResponse[0]._id }, (error, payments) => {
@@ -208,7 +209,7 @@ const paymentByIdUser = async (req, res) => {
         }
         t.map((x) => {
           return b = x.map((c) => {
-            newData_.push({
+            newData.push({
               _id: c._id,
               dateDeposit: c.dateDeposit,
               amount: c.amount,
@@ -223,7 +224,6 @@ const paymentByIdUser = async (req, res) => {
         res.status(200).send(messages('OK', newData))
       }
     }
-    // consola('Pagos por ID usuario --------------> ', t)
   } catch (error) {
     res.status(200).send(messages('false', 'No se encotraron datos para esta solicitud'))
   }

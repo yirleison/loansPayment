@@ -37,7 +37,7 @@ const deleteExpensesOrIcomes = async (id) => {
 
 const consultExpensesOrIcomes = async (id) => {
   return new Promise((resolve, reject) => {
-    ExpensesIcomes.find({id : id}, (error, expensesIcomes) => {
+    ExpensesIcomes.findOne({_id : id}, (error, expensesIcomes) => {
       if (error) {
         return reject(error)
       } else {
@@ -45,6 +45,21 @@ const consultExpensesOrIcomes = async (id) => {
           return reject(error)
         }
         return resolve(expensesIcomes)
+      }
+    })
+  })
+}
+
+const updateExpensesOrIcomes = async (id,payload) => {
+  return new Promise((resolve, reject) => {
+    ExpensesIcomes.findOneAndUpdate({_id: id}, {$set: payload}, (error, expensesIcomesUpdate) => {
+      if (error) {
+        return reject(error)
+      } else {
+        if (!expensesIcomesUpdate) {
+          return reject(error)
+        }
+        return resolve(expensesIcomesUpdate)
       }
     })
   })
@@ -162,5 +177,6 @@ module.exports = {
   updateCapital,
   createIcome,
   deleteExpensesOrIcomes,
-  consultExpensesOrIcomes
+  consultExpensesOrIcomes,
+  updateExpensesOrIcomes
 }
