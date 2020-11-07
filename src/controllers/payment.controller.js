@@ -126,7 +126,7 @@ const paymentByIdLoan = async (req, res) => {
   paymentLogger.info({
     message: "Inicio de funcionabilidad para listar pago por ID"
   });
-  Payment.find({ idLoan: req.params.id }).sort({ statusDeposit: false }).exec(async (error, payment) => {
+  Payment.find({ idLoan: req.params.id }).sort({ _d: -1 }).exec(async (error, payment) => {
     if (error) {
       res.status(500).send({
         status: "false",
