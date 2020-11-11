@@ -295,7 +295,7 @@ const paymentUpdateById = async (req, res) => {
                   let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
                   if (loanUpdate) {
                     //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
                       if (data) {
                         //res.status(200).send(messages("OK", paymentService));
@@ -324,7 +324,7 @@ const paymentUpdateById = async (req, res) => {
             if (paymentUpdate) {
               try {
                 //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+                modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
                 createIcome(modelIcomeExpense, 0, 0, 0, 0, 1, (consultPayment.balanceLoand - consultPayment.interest), (consultPayment.interest), function (data, error) {
                   if (data) {
                     //Pendiente manejar el error... 
@@ -355,7 +355,7 @@ const paymentUpdateById = async (req, res) => {
               paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
               if (paymentUpdate) {
                 try {
-                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 0, 1, 0, 0, 0, (consultPayment.balanceLoand - aux), consultPayment.interest, function (data, error) {
                       if (data) {
                         //Pendiente manejar el error...
@@ -390,7 +390,7 @@ const paymentUpdateById = async (req, res) => {
                     modelInterest = createModelInterestPending(moment(payload.dateDeposit).format("YYYY-MM-DD"), (consultPayment.interest - amount), false, consultPayment._id)
                     if (await interestServices.createInteresPending(modelInterest)) {
                       //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                      modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+                      modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
                     }
                     createIcome(modelIcomeExpense, 0, 0, 1, 0, 0, 0, 0, function (data, error) {
                       if (data) {
@@ -422,7 +422,7 @@ const paymentUpdateById = async (req, res) => {
             if (paymentUpdate) {             
               try {
                   //Creo un modelo para crear una entrada de dinero y actualizo el capital
-                  modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+                  modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
                   createIcome(modelIcomeExpense, 0, 0, 0, 1, 0, 0, consultPayment.interest, function (data, error) {
                     if (data) {
                       //Pensiente manejar el error...
@@ -490,7 +490,7 @@ const paymentUpdateById = async (req, res) => {
           let loanUpdate = loanServices.loanUpdate(consultLoan._id, modelUpdateLoan);
           if (loanUpdate) {
             //Creo un modelo para crear una entrada de dinero y actualizo el capital
-            modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 3, consultLoan._id.toString());
+            modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, payload.amount, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
             createIcome(modelIcomeExpense, 1, 0, 0, 0, 0, consultLoan.amount, consultPayment.interest, function (data, error) {
               if (data) {
                 //res.status(200).send(messages("OK", paymentService));
