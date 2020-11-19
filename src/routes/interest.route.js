@@ -8,5 +8,6 @@ api.get('/interest/:id', interestController.interestById);
 api.get('/interest-por-pago/:id', interestController.listInterestByIdPayment);
 api.put('/interest/:id', interestController.interestUpdateById);
 api.delete('/interest/:id', interestController.deleteInterest);
+api.delete('/interest-usuario/:id', interestController.interestByIdUser);
 
 module.exports = api;

@@ -63,7 +63,7 @@ const createLoand = async (req, res) => {
               payment.valueDeposit = 0;
               payment.amount = 0;
               //calculate interest initial value
-              payment.interest = calInteresValue(parseFloat(loan.rateInterest), loan.amount)
+              payment.interest = calInteresValue(parseFloat(loan.rateInterest), loan.amount).toFixed(2)
               payment.nextDatePayment = nextDatePayment;
               payment.balanceLoand = loanSaved.amount;
               payment.statusDeposit = false;

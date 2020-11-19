@@ -360,12 +360,16 @@ const deleteInterest = async (req, res) => {
     }
 }
 
+const interestByIdUser = (req, res) => {
+    console.log(req.params.id)
+}
+
 const createModelIcomeExpense = (dateIncome, dateExpense, income, expenses, note, type, id) => {
     return {
         dateIncome,
         dateExpense,
-        income: Number(parseFloat(income).toFixed(2)),
-        expenses: Number(parseFloat(expenses).toFixed(2)),
+        income: parseFloat(income).toFixed(2),
+        expenses: parseFloat(expenses).toFixed(2),
         type,
         id,
         note
@@ -379,5 +383,6 @@ module.exports = {
     interestUpdateById,
     listInterestByIdPayment,
     updateInteresById,
-    deleteInterest
+    deleteInterest,
+    interestByIdUser
 }
