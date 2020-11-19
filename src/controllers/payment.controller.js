@@ -261,11 +261,14 @@ const paymentUpdateById = async (req, res) => {
   const payload = req.body;
   const idPayment = req.params.id;
   const typePayment = req.headers.typepayment;
+  let consultPayment = await paymentServices.paymentById(idPayment);
+        let consultLoan = await loanServices.loanById(consultPayment.idLoan);
   //Valido el tipo de pago si es 1 es porque se va pagar una cuota, si es 2 es porque se va actualizar una cuota existente..
+  consola(payload)
+  consola(consultPayment)
    switch (typePayment) {
     case "1":
       consola("Entro a la funcioanalidad para realizar un pago de una cuota existente");
-      consola(payload)
       try {
         let consultPayment = await paymentServices.paymentById(idPayment);
         let consultLoan = await loanServices.loanById(consultPayment.idLoan);
@@ -355,7 +358,7 @@ const paymentUpdateById = async (req, res) => {
               paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
               if (paymentUpdate) {
                 try {
-                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, consultPayment.interest, aux, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
+                    modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
                     createIcome(modelIcomeExpense, 0, 1, 0, 0, 0, (consultPayment.balanceLoand - aux), consultPayment.interest, function (data, error) {
                       if (data) {
                         //Pendiente manejar el error...
@@ -637,8 +640,8 @@ updateInterestPending = async (payload, id) => {
 const createModelIcomeExpense = (date, dateExpense, income, expenses, note, type, id) => {
   return {
     date,
-    income: Number(parseFloat(income).toFixed(2)),
-    expenses: Number(parseFloat(expenses).toFixed(2)),
+    income: parseFloat(income).toFixed(2),
+    expenses: parseFloat(expenses).toFixed(2),
     type,
     id,
     note

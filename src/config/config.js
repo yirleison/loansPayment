@@ -34,7 +34,7 @@ let urlDB;
 
  if (process.env.NODE_ENV === 'dev') {
      urlDB = 'mongodb://localhost:27017/loanPayment';
-     //urlDB = 'mongodb://172.17.0.1:27017/loanPayment';
+     //mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false
  }
  else {
    urlDB = process.env.MONGO_URI;
