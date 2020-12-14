@@ -79,7 +79,7 @@ const PayloadForUpdateBalanceCapital = (expenses, balanceCapital) => {
       if (auxInterest - balanceCapital[0].balanceCapital) {
         auxCapital = balanceCapital[0].balanceCapital - auxInterest;
         payload = {
-          balanceCapital: auxCapital,
+          balanceCapital: parseFloat(auxCapital).toFixed(2),
           balanceInterest: 0,
           balanceCapitalAfter: balanceCapital[0].balanceCapital,
           balanceInterestAfter: balanceCapital[0].balanceInterest,
@@ -87,7 +87,7 @@ const PayloadForUpdateBalanceCapital = (expenses, balanceCapital) => {
       }
     }
     if (expenses < balanceCapital[0].balanceInterest) {
-      auxInterest = balanceCapital[0].balanceInterest - expenses;
+      auxInterest = parseFloat(balanceCapital[0].balanceInterest - expenses).toFixed(2);
       payload = {
         balanceCapital: balanceCapital[0].balanceCapital,
         balanceInterest: auxInterest,

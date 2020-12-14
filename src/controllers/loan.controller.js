@@ -52,7 +52,7 @@ const createLoand = async (req, res) => {
                 message: "Error al tratar de procesar la solicitud",
               });
             } else {
-              console.log(loanSaved)
+             // console.log(loanSaved)
               loanLogger.info({
                 message: "Prestamo creado en la base de datos",
                 loanSave: loanSaved,
@@ -65,10 +65,9 @@ const createLoand = async (req, res) => {
               //calculate interest initial value
               payment.interest = calInteresValue(parseFloat(loan.rateInterest), loan.amount).toFixed(2)
               payment.nextDatePayment = nextDatePayment;
-              payment.balanceLoand = loanSaved.amount;
+              payment.balanceLoand = parseFloat(loanSaved.amount).toFixed(2);
               payment.statusDeposit = false;
               payment.idLoan = loanSaved._id;
-              consola('modelo pago ------> ', payment)
               try {
                 let paymentResponse = await paymentService.schedulePayment(
                   payment
@@ -79,7 +78,7 @@ const createLoand = async (req, res) => {
                     if (fullName) {
                       // Crete model expersesIcomes
                       let expensesIcomes = createModelExpensesIcomes(
-                        moment(body.dateLoan).format("YYYY-MM-DD"),
+                        moment(new Date(body.dateLoan)).format("YYYY-MM-DD"),
                         0,
                         loan.amount,
                         `Prestamo registrado al cliente ${fullName}`,
@@ -93,8 +92,9 @@ const createLoand = async (req, res) => {
                         if (expensesIcomesResponse) {
                           let payload = balanceCapitalService.PayloadForUpdateBalanceCapital(
                             expensesIcomes.expenses,
-                            consultBalanceCapital
+                             consultBalanceCapital
                           );
+                          //console.log('payload ---------> ',payload)
                           try {
                             let upatateBalanceCapitalService = balanceCapitalService.updateCapital(
                               payload,

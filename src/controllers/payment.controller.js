@@ -682,12 +682,14 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
   try {
     let balanceCapital = await expensesIcomesService.consultBalanceCapital();
     balanceCapital = balanceCapital[0];
-    if (balanceCapital) {
+    console.log('balanceCapital ----> ',balanceCapital)
+    console.log(amount1 +' ----> '+ amount2 +' ----> '+ amount3 +' ----> '+ amount4 +' ----> '+ amount5)
+     if (balanceCapital) {
       //Caso cuando el cliente  paga la totalidad del prestamo
       if (amount1 == 1 && amountCapital > 0 && amountInterest > 0) {
         payload = {
-          balanceCapital: (balanceCapital.balanceCapital + amountCapital),
-          balanceInterest: (balanceCapital.balanceInterest + amountInterest),
+          balanceCapital: parseFloat((balanceCapital.balanceCapital + amountCapital)).toFixed(2),
+          balanceInterest: parseFloat((balanceCapital.balanceInterest + amountInterest)).toFixed(2),
         }
       }
       //Caso cuando el cliente realiza un pago mayor al valor del interes pero menor al capital
@@ -700,21 +702,21 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
       //Caso cuando el cliente realiza un pago menor al valor del interes
       if (amount3 == 1 && amountInterest == 0) {
         payload = {
-          balanceCapital: (balanceCapital.balanceCapital),
-          balanceInterest: (modelIcomeExpense.income + balanceCapital.balanceInterest),
+          balanceCapital: parseFloat((balanceCapital.balanceCapital)).toFixed(2),
+          balanceInterest: parseFloat((modelIcomeExpense.income + balanceCapital.balanceInterest)).toFixed(2),
         }
       }
       //Caso cuando el cliente realiza un pago y el monto ingresado es == al interes de la cuota programda
       if (amount4 == 1 && amountCapital == 0 && amountInterest > 0) {
         payload = {
-          balanceCapital: (balanceCapital.balanceCapital),
-          balanceInterest: (modelIcomeExpense.income + balanceCapital.balanceInterest),
+          balanceCapital: parseFloat((balanceCapital.balanceCapital)).toFixed(2),
+          balanceInterest: parseFloat((modelIcomeExpense.income + balanceCapital.balanceInterest)).toFixed(2),
         }
       }
       if (amount5 == 1 && amountCapital > 0 && amountInterest > 0) {
         payload = {
-          balanceCapital: (balanceCapital.balanceCapital + amountCapital),
-          balanceInterest: (modelIcomeExpense.income + balanceCapital.balanceInterest),
+          balanceCapital: parseFloat((balanceCapital.balanceCapital + amountCapital)).toFixed(2),
+          balanceInterest: parseFloat((modelIcomeExpense.income + balanceCapital.balanceInterest)).toFixed(2),
         }
       }
       //Update capital
