@@ -736,8 +736,8 @@ createIcome = async (modelIcomeExpense, amount1, amount2, amount3, amount4, amou
       //Caso cuando el cliente realiza un pago mayor al valor del interes pero menor al capital
       if (amount2 == 1 && amountCapital > 0 && amountInterest > 0) {
         payload = {
-          balanceCapital: parseFloat(balanceCapital.balanceCapital + amountCapital),
-          balanceInterest: parseFloat(balanceCapital.balanceInterest + amountInterest),
+          balanceCapital: parseFloat(balanceCapital.balanceCapital + amountCapital).toFixed(2),
+          balanceInterest: parseFloat(balanceCapital.balanceInterest + amountInterest).toFixed(2),
         }
       }
       //Caso cuando el cliente realiza un pago menor al valor del interes
