@@ -267,14 +267,18 @@ const paymentUpdateById = async (req, res) => {
   //Valido el tipo de pago si es 1 es porque se va pagar una cuota, si es 2 es porque se va actualizar una cuota existente..
   //consola(payload)
   //consola('Monto -------> ',parseFloat(payload.amount))
+  //consola('Tipo pago -------> ',typePayment)
   //consola(consultPayment)
   switch (typePayment) {
-    case "1":
+    case '1':
       consola("Entro a la funcioanalidad para realizar un pago de una cuota existente");
       try {
         let consultPayment = await paymentServices.paymentById(idPayment);
         let consultLoan = await loanServices.loanById(consultPayment.idLoan);
         let { fullName } = consultLoan.idUser
+        //consola('consultPayment -------> ',consultPayment)
+       // consola('consultLoan -------> ', consultLoan)
+
         //Consulto el interes pendiente
         // console.log('Consulta interes pendiente', await consultInteresPending(consultPayment))
         //Pendiente consultar en la colección iterestPending si el cliente tiene intereses en mora relacionados a el id de la cuota
@@ -282,8 +286,9 @@ const paymentUpdateById = async (req, res) => {
         if (consultPayment) {
           let amount = 0;
           amount = parseFloat(payload.amount)
+          consola('Monto -------> ',amount)
+          aux = (amount - consultPayment.balanceLoand);
           if (amount > consultPayment.balanceLoand) {
-            aux = (amount - consultPayment.balanceLoand);
             if (aux == consultPayment.interest) {
               consola("Caso cuando el cliente  paga la totalidad del prestamo", aux);
               //Creo un modelo de pagos para actualizar una cuota de pago existente....
@@ -447,6 +452,42 @@ const paymentUpdateById = async (req, res) => {
             } else {
               res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
             }
+          }
+          if(amount > consultPayment.balanceLoand && aux < consultPayment.interest){
+            consola('Caso cuando el cliente paga una cuota mayor al capital y el pago del interes es menor')
+            aux = (amount - consultPayment.interest);
+            consola(aux)
+            if (consultPayment.balanceLoand > aux) {
+              consola('El restande del monto - interes es menor que el balance', parseFloat(aux).toFixed(2));
+              paymentService = createModelPayment(moment(payload.dateDeposit).format("YYYY-MM-DD"), parseFloat(payload.amount), parseFloat(consultPayment.interest),
+                consultPayment.nextDatePayment, parseFloat((consultPayment.balanceLoand - aux)), true, consultPayment.idLoan)
+              //console.log('Entro ---------------> ',parseFloat(aux).toFixed(2), 'monto ingresado --> ', amount)
+              //console.log('consultPayment.balanceLoand ------------> ',consultPayment.balanceLoand)
+              //console.log('consultPayment.balanceLoand - aux ------------> ',consultPayment.balanceLoand - aux)
+            }
+            try {
+            paymentUpdate = await paymentServices.paymenUpdateById(idPayment, paymentService);
+            if (paymentUpdate) {
+              try {
+                modelIcomeExpense = createModelIcomeExpense(moment(payload.dateDeposit).format("YYYY-MM-DD"), null, amount, 0, 'Recaudos de ' + fullName, 0, consultLoan._id.toString());
+                createIcome(modelIcomeExpense, 0, 1, 0, 0, 0, aux, consultPayment.interest, function (data, error) {
+                  if (data) {
+                    //Pendiente manejar el error...
+                    res.status(200).send(messages("OK", paymentService));
+                  }
+                  else {
+                    res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
+                  }
+                });
+              } catch (error) {
+                consola(error)
+              }
+            } else {
+            }
+          } catch (error) {
+            consola(error)
+            res.status(500).send(messages('false', 'Ha ocurrido un error al tratar de procesar la solicitud'));
+          }
           }
           //Pendiente funcionabilidad cuando un cliente quiere pagar lo que lleva del prestamo hasta la fecha.
         } else {
