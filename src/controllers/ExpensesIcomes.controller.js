@@ -33,7 +33,7 @@ const createExpeseIncome = async (req, res) => {
                 if (body.expenses > balanceCapital[0].balanceInterest) {
                     auxInterest = (body.expenses - balanceCapital[0].balanceInterest);
                     if ((auxInterest - balanceCapital[0].balanceCapital)) {
-                        auxCapital = (balanceCapital[0].balanceCapital - auxInterest);
+                        auxCapital = parseFloat((balanceCapital[0].balanceCapital - auxInterest)).toFixed(2);
                         payload = {
                             balanceCapital: auxCapital,
                             balanceInterest: 0,
@@ -43,7 +43,7 @@ const createExpeseIncome = async (req, res) => {
                     }
                 }
                 if (body.expenses < balanceCapital[0].balanceInterest) {
-                    auxInterest = (balanceCapital[0].balanceInterest - body.expenses);
+                    auxInterest = parseFloat((balanceCapital[0].balanceInterest - body.expenses)).toFixed(2);
                     payload = {
                         balanceCapital: balanceCapital[0].balanceCapital,
                         balanceInterest: auxInterest,
@@ -60,7 +60,7 @@ const createExpeseIncome = async (req, res) => {
                     }
                 }
                 if (body.expenses > balanceCapital[0].balanceInterest) {
-                    auxInterest = (body.expenses - balanceCapital[0].balanceInterest);
+                    auxInterest = parseFloat((body.expenses - balanceCapital[0].balanceInterest)).toFixed(2);
                     if (auxInterest == balanceCapital[0].balanceCapital) {
                         payload = {
                             balanceCapital: 0,
@@ -73,7 +73,7 @@ const createExpeseIncome = async (req, res) => {
             }
             if (body.type == 0) {
                 payload = {
-                    balanceCapital: (balanceCapital[0].balanceCapital + parseFloat(body.income)),
+                    balanceCapital: (balanceCapital[0].balanceCapital + parseFloat(body.income).toFixed(2)),
                     balanceInterest: (balanceCapital[0].balanceInterest),
                     balanceCapitalAfter: balanceCapital[0].balanceCapital,
                     balanceInterestAfter: balanceCapital[0].balanceInterest
