@@ -33,8 +33,8 @@ process.env.SECRET_KEY = process.env.SECRET_KEY || 'calve_secreta_curso';
 let urlDB;
 
  if (process.env.NODE_ENV === 'dev') {
-     urlDB = 'mongodb://localhost:27017/loanPayment';
-     //mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false
+     //urlDB = 'mongodb://localhost:27017/loanPayment';
+     mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false
  }
  else {
    urlDB = process.env.MONGO_URI;

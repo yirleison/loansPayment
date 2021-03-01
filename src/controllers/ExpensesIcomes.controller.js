@@ -23,7 +23,9 @@ const createExpeseIncome = async (req, res) => {
     let auxCapital = 0;
     let payload;
 
-    try {
+    console.log(body);
+
+   try {
         let balanceCapital = await expensesIcomesService.consultBalanceCapital();
         if (balanceCapital[0].balanceCapital == 0 && balanceCapital[0].balanceInterest == 0 && body.expenses > 0) {
             console.log('No se puede crear una salida de dinero por que no hay saldo en caja')
@@ -37,8 +39,8 @@ const createExpeseIncome = async (req, res) => {
                         payload = {
                             balanceCapital: auxCapital,
                             balanceInterest: 0,
-                            balanceCapitalAfter: balanceCapital[0].balanceCapital,
-                            balanceInterestAfter: balanceCapital[0].balanceInterest
+                            balanceCapitalAfter: parseFloat( balanceCapital[0].balanceCapital).toFixed(2),
+                            balanceInterestAfter: parseFloat(balanceCapital[0].balanceInterest).toFixed(2)
                         }
                     }
                 }
@@ -47,16 +49,16 @@ const createExpeseIncome = async (req, res) => {
                     payload = {
                         balanceCapital: balanceCapital[0].balanceCapital,
                         balanceInterest: auxInterest,
-                        balanceCapitalAfter: balanceCapital[0].balanceCapital,
-                        balanceInterestAfter: balanceCapital[0].balanceInterest
+                        balanceCapitalAfter: parseFloat(balanceCapital[0].balanceCapital).toFixed(2),
+                        balanceInterestAfter:  parseFloat(balanceCapital[0].balanceInterest).toFixed(2)
                     }
                 }
                 if (body.expenses == balanceCapital[0].balanceInterest) {
                     payload = {
-                        balanceCapital: balanceCapital[0].balanceCapital,
+                        balanceCapital:  parseFloat(balanceCapital[0].balanceCapital).toFixed(2),
                         balanceInterest: 0,
-                        balanceCapitalAfter: balanceCapital[0].balanceCapital,
-                        balanceInterestAfter: balanceCapital[0].balanceInterest
+                        balanceCapitalAfter:  parseFloat(balanceCapital[0].balanceCapital).toFixed(2),
+                        balanceInterestAfter:  parseFloat(balanceCapital[0].balanceInterest).toFixed(2)
                     }
                 }
                 if (body.expenses > balanceCapital[0].balanceInterest) {
@@ -65,18 +67,18 @@ const createExpeseIncome = async (req, res) => {
                         payload = {
                             balanceCapital: 0,
                             balanceInterest: 0,
-                            balanceCapitalAfter: balanceCapital[0].balanceCapital,
-                            balanceInterestAfter: balanceCapital[0].balanceInterest
+                            balanceCapitalAfter:  parseFloat(balanceCapital[0].balanceCapital).toFixed(2),
+                            balanceInterestAfter:  parseFloat(balanceCapital[0].balanceInterest).toFixed(2)
                         }
                     }
                 }
             }
             if (body.type == 0) {
                 payload = {
-                    balanceCapital: (balanceCapital[0].balanceCapital + parseFloat(body.income).toFixed(2)),
-                    balanceInterest: (balanceCapital[0].balanceInterest),
-                    balanceCapitalAfter: balanceCapital[0].balanceCapital,
-                    balanceInterestAfter: balanceCapital[0].balanceInterest
+                    balanceCapital: (parseFloat(balanceCapital[0].balanceCapital + body.income).toFixed(2)),
+                    balanceInterest:  parseFloat(balanceCapital[0].balanceInterest).toFixed(2),
+                    balanceCapitalAfter:  parseFloat(balanceCapital[0].balanceCapital).toFixed(2),
+                    balanceInterestAfter:  parseFloat(balanceCapital[0].balanceInterest).toFixed(2)
                 }
             }
             try {
